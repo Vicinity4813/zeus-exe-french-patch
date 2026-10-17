@@ -69,8 +69,8 @@ Mappemondes plein écran
 -----------------------
 Avec une mappemonde agrandie, utilisez World Map Converter (Convertisseur mappemonde,
 https://github.com/Vicinity4813/zeus-world-maps) : il replace les cités, noms de régions
-et routes des scénarios (.pak, .set) et des sauvegardes (.sav) sur la carte agrandie,
-en gardant une copie .bak des originaux. Puis passez le patch de l'éditeur avec la même
+et routes des scénarios (.pak, .set), des cartes de l'éditeur (.map) et des sauvegardes (.sav)
+sur une mappemonde agrandie de n'importe quelle taille (il s'adapte à un Zeus.exe), en gardant une copie .bak des originaux. Puis passez le patch de l'éditeur avec la même
 taille de mappemonde et la même position de carte.
 
 

@@ -41,7 +41,7 @@ Move the English campaigns out of `Adventures` (don't delete them), or every cam
 
 ## Full-screen world maps
 
-For enlarged world maps, use **[World Map Converter](https://github.com/Vicinity4813/zeus-world-maps)** (*Convertisseur mappemonde*): it moves the cities, region names and trade routes of scenarios (`.pak`, `.set`) and saved games (`.sav`) onto the enlarged map, keeping `.bak` copies of the originals. Then patch the editor here with the same world map size and position.
+For enlarged world maps, use **[World Map Converter](https://github.com/Vicinity4813/zeus-world-maps)** (*Convertisseur mappemonde*): it moves the cities, region names and trade routes of scenarios (`.pak`, `.set`), editor maps (`.map`) and saved games (`.sav`) onto an enlarged world map of any size, and adapts to a `Zeus.exe` by itself; it keeps `.bak` copies of the originals. Then patch the editor here with the same world map size and position.
 
 ## Source code
 
@@ -102,6 +102,6 @@ Déplacez les campagnes anglaises hors du dossier `Adventures` (sans les supprim
 
 ### Mappemondes plein écran
 
-Pour des mappemondes agrandies, utilisez **[World Map Converter](https://github.com/Vicinity4813/zeus-world-maps)** (*Convertisseur mappemonde*) : il replace les cités, noms de régions et routes des scénarios (`.pak`, `.set`) et des sauvegardes (`.sav`) sur la carte agrandie, en gardant une copie `.bak` des originaux. Patchez ensuite l'éditeur ici avec la même taille de mappemonde et la même position.
+Pour des mappemondes agrandies, utilisez **[World Map Converter](https://github.com/Vicinity4813/zeus-world-maps)** (*Convertisseur mappemonde*) : il replace les cités, noms de régions et routes des scénarios (`.pak`, `.set`), des cartes de l'éditeur (`.map`) et des sauvegardes (`.sav`) sur une mappemonde agrandie de n'importe quelle taille, et s'adapte tout seul à un `Zeus.exe` ; il garde une copie `.bak` des originaux. Patchez ensuite l'éditeur ici avec la même taille de mappemonde et la même position.
 
 Merci à [zeus-poseidon-arm64](https://github.com/nic0lasm/zeus-poseidon-arm64) (nic0lasm) pour sa documentation de l'affichage du texte. Licence MIT — Vicinity4813. *Zeus* et *Poséidon* sont des jeux d'Impressions Games / Sierra ; aucun fichier du jeu n'est inclus, hormis la table des caractères française de 224 octets.

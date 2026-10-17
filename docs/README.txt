@@ -69,8 +69,8 @@ Full-screen world maps
 ----------------------
 With an enlarged world map, use World Map Converter (Convertisseur mappemonde,
 https://github.com/Vicinity4813/zeus-world-maps): it moves the cities, region names and
-trade routes of scenarios (.pak, .set) and saved games (.sav) onto the enlarged map,
-keeping a .bak copy of the originals. Then run the editor patch with the same world map
+trade routes of scenarios (.pak, .set), editor maps (.map) and saved games (.sav)
+onto an enlarged world map of any size (it adapts to a Zeus.exe), keeping a .bak copy of the originals. Then run the editor patch with the same world map
 size and the same map position.
 
 
