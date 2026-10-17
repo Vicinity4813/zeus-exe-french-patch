@@ -11,6 +11,7 @@ public class Site
     public int Offset;          // position dans le fichier
     public byte[] Original;     // octets attendus avant le patch
     public byte[] Patched;      // octets ecrits par le patch
+    public bool Required = true; // indispensable (sinon : saute avec un avertissement si un autre patch l'a deja modifie)
 
     public Site(string name, int offset, byte[] original, byte[] patched)
     {
@@ -46,7 +47,7 @@ public enum SiteState { Original, Patched, Other }
 // Bilan d'un ensemble d'endroits dans un exe.
 public class Survey
 {
-    public int Original, Patched, Other;
+    public int Original, Patched, Other, RequiredOther;
     public List<Site> Unexpected = new List<Site>();
 
     public static Survey Of(List<Site> sites, byte[] exe)
@@ -58,7 +59,7 @@ public class Survey
             {
                 case SiteState.Original: s.Original++; break;
                 case SiteState.Patched: s.Patched++; break;
-                default: s.Other++; s.Unexpected.Add(x); break;
+                default: s.Other++; if (x.Required) s.RequiredOther++; s.Unexpected.Add(x); break;
             }
         }
         return s;
@@ -66,4 +67,8 @@ public class Survey
 
     public bool AllOriginal { get { return Patched == 0 && Other == 0; } }
     public bool AllPatched { get { return Original == 0 && Other == 0; } }
+    // Patch possible : rien d'indispensable n'a ete modifie par un autre patch
+    public bool Patchable { get { return RequiredOther == 0; } }
+    // Rien a faire : tout ce qui pouvait l'etre est patche
+    public bool Done { get { return Original == 0 && RequiredOther == 0; } }
 }

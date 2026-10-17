@@ -31,7 +31,7 @@ public class Engine
     public string GameDir { get { return Path.GetDirectoryName(ExePath); } }
     public string BackupDir { get { return Path.Combine(GameDir, BackupDirName); } }
 
-    byte[] exe, frTable, savedTable;
+    byte[] exe, frTable, savedTable, savedHeader;
     List<Site> sites;
     public Survey Status;
     public string FrExeUsed;
@@ -50,7 +50,7 @@ public class Engine
         try { pe = new Pe(exe); if (pe.Off(FrenchPatch.CharTable) < 0) throw new Exception(); }
         catch { Log(L.T("Ce fichier n'est pas un Zeus.exe reconnu.", "This file is not a recognised Zeus.exe."), LogKind.Error); return false; }
 
-        savedTable = LoadSavedTable();
+        savedTable = LoadSavedTable(); savedHeader = LoadHex("entete-origine");
         frTable = FindFrTable();
         if (frTable == null && savedTable == null)
         {
@@ -60,25 +60,34 @@ public class Engine
         }
         if (frTable == null) frTable = LoadPatchedTable();
 
-        sites = FrenchPatch.Build(exe, frTable, savedTable);
+        sites = FrenchPatch.Build(exe, frTable, savedTable, savedHeader);
         Status = Survey.Of(sites, exe);
-        if (Status.AllOriginal && !FrenchPatch.LooksEnglishTable(exe, frTable))
+        if (Status.Patched == 0 && !FrenchPatch.LooksEnglishTable(exe, frTable))
         {
             Log(L.T("Table des caractères de l'exe inattendue.", "Unexpected character table in the exe."), LogKind.Error);
             return false;
         }
-        if (Status.AllOriginal) Log(L.T("Exe : anglais GOG (v2.1.4.0), pas encore patché. ", "Exe: English GOG (v2.1.4.0), not patched yet. ") + sites.Count + L.T(" endroits à modifier, tous conformes.", " places to change, all as expected."), LogKind.Ok);
-        else if (Status.AllPatched) Log(L.T("Exe : patch FR déjà appliqué.", "Exe: French patch already applied."), LogKind.Ok);
-        else
+        if (Status.Done) Log(L.T("Exe : patch FR déjà appliqué.", "Exe: French patch already applied."), LogKind.Ok);
+        else if (Status.Patched == 0) Log(string.Format(L.T("Exe : version anglaise 2.1.4.0, pas encore patchée ; {0} endroits à modifier.", "Exe: English version 2.1.4.0, not patched yet; {0} places to change."), Status.Original), LogKind.Ok);
+        else Log(string.Format(L.T("Exe : {0} endroits d'origine, {1} déjà patchés.", "Exe: {0} original places, {1} already patched."), Status.Original, Status.Patched), LogKind.Warn);
+        foreach (Site x in Status.Unexpected)
+            Log(string.Format(L.T("  {0} déjà modifié par un autre patch ({1}) : ", "  {0} already changed by another patch ({1}): ") + Site.Hex(Read(x.Offset, x.Original.Length), 12), x.Name,
+                x.Required ? L.T("indispensable", "required") : L.T("sauté", "skipped")), x.Required ? LogKind.Error : LogKind.Warn);
         {
-            Log(string.Format(L.T("Exe : {0} endroits d'origine, {1} déjà patchés, {2} inattendus.", "Exe: {0} original places, {1} already patched, {2} unexpected."), Status.Original, Status.Patched, Status.Other), Status.Other > 0 ? LogKind.Error : LogKind.Warn);
-            foreach (Site x in Status.Unexpected)
-                Log(string.Format("  {0} @ {1:X} : {2}", x.Name, x.Offset, Site.Hex(Read(x.Offset, x.Original.Length), 12)), LogKind.Error);
-            if (Status.Other > 0)
+            if (!Status.Patchable)
                 Log(L.T("Cet exe n'est pas la version GOG anglaise, ou un autre patch a modifié les mêmes octets : rien ne sera écrit.",
                         "This exe is not the English GOG version, or another patch changed the same bytes: nothing will be written."), LogKind.Error);
         }
         return true;
+    }
+
+    // En-tete de .text tel qu'il est : taille virtuelle (4 octets) et attributs (4 octets)
+    byte[] HeaderNow()
+    {
+        int hdr = (int)new Pe(exe).Secs[0][5];
+        byte[] h = new byte[8];
+        Array.Copy(exe, hdr + 8, h, 0, 4); Array.Copy(exe, hdr + 36, h, 4, 4);
+        return h;
     }
 
     byte[] Read(int off, int n) { byte[] b = new byte[n]; if (off >= 0 && off + n <= exe.Length) Array.Copy(exe, off, b, 0, n); return b; }
@@ -115,6 +124,7 @@ public class Engine
         return d;
     }
 
+    byte[] LoadHex(string key) { string v; return LoadState().TryGetValue(key, out v) ? FromHex(v) : null; }
     byte[] LoadSavedTable() { string v; return LoadState().TryGetValue("table-origine", out v) ? FromHex(v) : null; }
     byte[] LoadPatchedTable() { string v; return LoadState().TryGetValue("table-fr", out v) ? FromHex(v) : null; }
 
@@ -128,11 +138,13 @@ public class Engine
 
     void SaveState(byte[] tableOrig, byte[] tableFr, List<string> copied)
     {
+        byte[] header = savedHeader;
         Directory.CreateDirectory(BackupDir);
         StringBuilder sb = new StringBuilder();
         sb.AppendLine("# Patch FR de Zeus.exe : etat pour l'annulation. Ne pas modifier.");
         if (tableOrig != null) sb.AppendLine("table-origine " + ToHex(tableOrig));
         if (tableFr != null) sb.AppendLine("table-fr " + ToHex(tableFr));
+        if (tableOrig != null && header != null) sb.AppendLine("entete-origine " + ToHex(header));
         foreach (string c in copied) sb.AppendLine("fichier " + c);
         File.WriteAllText(StatePath, sb.ToString(), Encoding.UTF8);
     }
@@ -145,7 +157,7 @@ public class Engine
     public bool Patch(Options o, bool dryRun)
     {
         if (!Analyse()) return false;
-        if (o.Exe && Status.Other > 0) return false;
+        if (o.Exe && !Status.Patchable) return false;
         if ((o.Texts || o.Menus || o.Voices) && (string.IsNullOrEmpty(FrDir) || !Directory.Exists(FrDir)))
         {
             Log(L.T("Choisissez le dossier de votre jeu en français pour copier ses fichiers.", "Choose the folder of your French game to copy its files."), LogKind.Error);
@@ -173,7 +185,7 @@ public class Engine
             if (!File.Exists(src) || SameFile(src, dst)) continue;
             toCopy++;
         }
-        bool exeToDo = o.Exe && !Status.AllPatched;
+        bool exeToDo = o.Exe && !Status.Done;
         Log(string.Format(L.T("À faire : exe {0}, {1} fichier(s) français à copier.", "To do: exe {0}, {1} French file(s) to copy."),
             exeToDo ? L.T("à patcher", "to patch") : L.T("rien", "nothing"), toCopy), LogKind.Info);
         if (dryRun) { Log(L.T("Vérification terminée : rien n'a été écrit.", "Check done: nothing was written."), LogKind.Ok); return true; }
@@ -189,10 +201,11 @@ public class Engine
             // copie de l'exe tel qu'il est avant le patch (rafraichie si l'exe a change, par ex. autre resolution)
             if (Status.Patched == 0 || !File.Exists(exeBak)) { Writable(exeBak); File.Copy(ExePath, exeBak, true); }
             if (tableOrig == null) tableOrig = Read(sites[0].Offset, 224);
+            if (savedHeader == null) savedHeader = HeaderNow();
             byte[] outb = (byte[])exe.Clone();
             foreach (Site x in sites)
                 if (x.StateIn(exe) == SiteState.Original) Array.Copy(x.Patched, 0, outb, x.Offset, x.Patched.Length);
-            if (!Survey.Of(sites, outb).AllPatched) throw new Exception("vérification après patch");
+            if (!Survey.Of(sites, outb).Done) throw new Exception("vérification après patch");
             SaveState(tableOrig, frTable, copied);
             if (!WriteExe(outb)) return false;
             Log(string.Format(L.T("Exe patché ({0} endroits). Original sauvegardé dans « {1} ».", "Exe patched ({0} places). Original saved in \"{1}\"."), sites.Count, BackupDirName), LogKind.Ok);
@@ -290,10 +303,10 @@ public class Engine
         if (sites != null && Status.Patched > 0)
         {
             if (savedTable == null) { Log(L.T("Sauvegarde du patch introuvable : impossible d'annuler le patch de l'exe.", "Patch backup not found: cannot undo the exe patch."), LogKind.Error); return false; }
-            if (Status.Other > 0) { Log(L.T("Des octets patchés ont été modifiés depuis : annulation refusée.", "Patched bytes were changed since: undo refused."), LogKind.Error); return false; }
+            if (!Status.Patchable) { Log(L.T("Des octets patchés ont été modifiés depuis : annulation refusée.", "Patched bytes were changed since: undo refused."), LogKind.Error); return false; }
             byte[] outb = (byte[])exe.Clone();
             foreach (Site x in sites) if (x.StateIn(exe) == SiteState.Patched) Array.Copy(x.Original, 0, outb, x.Offset, x.Original.Length);
-            if (!Survey.Of(sites, outb).AllOriginal) throw new Exception("vérification après annulation");
+            if (Survey.Of(sites, outb).Patched > 0) throw new Exception("vérification après annulation");
             if (!WriteExe(outb)) return false;
             Log(L.T("Exe : patch FR annulé (les autres modifications, comme la résolution, sont conservées).", "Exe: French patch undone (other changes, such as the resolution, are kept)."), LogKind.Ok);
             any = true;

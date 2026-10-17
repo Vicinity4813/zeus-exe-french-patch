@@ -74,8 +74,8 @@ public static class FrenchPatch
     const uint TextVirtualSize = 0x001D6351, TextFlags = 0x60000020;
 
     // Endroits du patch FR dans cet exe. frTable : table francaise (224 octets) reprise de l'exe francais ;
-    // savedTable : table d'origine notee lors du patch (pour reconnaitre et annuler un exe deja patche), ou null.
-    public static List<Site> Build(byte[] exe, byte[] frTable, byte[] savedTable)
+    // savedTable, savedHeader : table et en-tete d'origine notes lors du patch (pour reconnaitre et annuler un exe deja patche), ou null.
+    public static List<Site> Build(byte[] exe, byte[] frTable, byte[] savedTable, byte[] savedHeader)
     {
         Pe pe = new Pe(exe);
         List<Site> s = new List<Site>();
@@ -99,28 +99,84 @@ public static class FrenchPatch
                 Array.Copy(BitConverter.GetBytes(Rects[r][k]), 0, a, 2 * k, 2);
                 Array.Copy(BitConverter.GetBytes(Rects[r][4 + k]), 0, b, 2 * k, 2);
             }
-            s.Add(new Site(string.Format("bouton {0:X}", RectVa[r]), pe.Off(RectVa[r]), a, b));
+            Site x = new Site(string.Format("bouton {0:X}", RectVa[r]), pe.Off(RectVa[r]), a, b);
+            x.Required = false;   // un patch widescreen a pu le deplacer : saute avec un avertissement
+            s.Add(x);
         }
 
-        // 5. positions de textes
+        // 5. positions de textes (facultatif)
         foreach (object[] fx in TextFixes)
-            s.Add(new Site("texte « " + fx[3] + " »", pe.Off((uint)fx[0]), (byte[])fx[1], (byte[])fx[2]));
+        {
+            Site x = new Site("texte « " + fx[3] + " »", pe.Off((uint)fx[0]), (byte[])fx[1], (byte[])fx[2]);
+            x.Required = false;
+            s.Add(x);
+        }
 
-        // 2. routines ajoutees (place libre) et detours
-        Asm a2 = Routines();
+        // 2. routines ajoutees, dans une place libre de .text, et detours
+        uint org = FindCave(exe, pe);
+        Asm a2 = Routines(org);
         byte[] code = a2.Build();
-        if (code.Length > CaveSize) throw new Exception("routines trop longues");
-        s.Add(new Site("routines ajoutées", pe.Off(Cave), new byte[code.Length], code));
+        s.Add(new Site("routines ajoutées", pe.Off(org), new byte[code.Length], code));
         s.Add(new Site("détour hauteur de ligne (textes)", pe.Off(DrawGlyph), new byte[] { 0x51, 0x8B, 0x44, 0x24, 0x0C }, Jmp(DrawGlyph, a2.Addr("h1"), 0)));
         s.Add(new Site("détour hauteur de ligne (panneaux)", pe.Off(PanelGlyph), new byte[] { 0x53, 0x8B, 0x5C, 0x24, 0x0C }, Jmp(PanelGlyph, a2.Addr("h2"), 0)));
         s.Add(new Site("détour hauteur des glyphes (panneaux)", pe.Off(PanelHeight), new byte[] { 0x0F, 0xBF, 0x48, 0x16, 0x83, 0xE9, 0x0B }, Jmp(PanelHeight, a2.Addr("h3"), 2)));
 
-        // en-tete de .text : taille virtuelle = taille brute (place libre comprise) et ecriture permise (variable delta)
+        // en-tete de .text : taille virtuelle couvrant les routines et ecriture permise (variable delta).
+        // D'origine : valeurs de l'exe (ou notees lors du patch) ; un autre patch a pu deja les changer.
         uint[] t = pe.Secs[0];
         int hdr = (int)t[5];
-        s.Add(new Site("en-tête .text (taille)", hdr + 8, BitConverter.GetBytes(TextVirtualSize), BitConverter.GetBytes(t[3])));
-        s.Add(new Site("en-tête .text (attributs)", hdr + 36, BitConverter.GetBytes(TextFlags), BitConverter.GetBytes(TextFlags | 0x80000000u)));
+        byte[] hcur = new byte[8];
+        Array.Copy(exe, hdr + 8, hcur, 0, 4); Array.Copy(exe, hdr + 36, hcur, 4, 4);
+        uint needSize = org + (uint)code.Length - t[0];
+        byte[] hnew = new byte[8];
+        uint vs = BitConverter.ToUInt32(savedHeader ?? hcur, 0), fl = BitConverter.ToUInt32(savedHeader ?? hcur, 4);
+        Array.Copy(BitConverter.GetBytes(Math.Max(vs, Math.Max(needSize, t[3]))), 0, hnew, 0, 4);   // toute la partie brute de .text
+        Array.Copy(BitConverter.GetBytes(fl | 0x80000000u), 0, hnew, 4, 4);
+        byte[] horig = savedHeader ?? hcur;
+        s.Add(new Site("en-tête .text (taille)", hdr + 8, Part(horig, 0), Part(hnew, 0)));
+        s.Add(new Site("en-tête .text (attributs)", hdr + 36, Part(horig, 4), Part(hnew, 4)));
         return s;
+    }
+
+    // Place des routines : celle qu'elles occupent deja (exe patche : on suit le detour), sinon 0x5D7400 si libre,
+    // sinon la premiere place libre en fin de .text. La zone 0x5D7E40-0x5D8000 est laissee au Resolution Customiser
+    // (il y ecrit son propre code), pour qu'il puisse encore etre passe apres notre patch.
+    static uint FindCave(byte[] exe, Pe pe)
+    {
+        int len = Routines(Cave).Build().Length;
+        uint h1 = Routines(Cave).Addr("h1") - Cave;
+        int d = pe.Off(DrawGlyph);
+        if (d >= 0 && exe[d] == 0xE9)
+        {
+            uint target = (uint)(DrawGlyph + 5 + BitConverter.ToInt32(exe, d + 1));
+            uint org0 = target - h1;
+            int o = pe.Off(org0);
+            if (o >= 0 && o + len <= exe.Length && SameAt(exe, o, Routines(org0).Build())) return org0;
+        }
+        uint[] t = pe.Secs[0];
+        uint start = t[0] + TextVirtualSize;   // fin du code de la compilation GOG
+        uint end = Math.Min(t[0] + t[3], 0x005D7E40);
+        foreach (uint cand in Candidates(start, end))
+        {
+            int o = pe.Off(cand);
+            if (o < 0 || cand + len + 16 > end) continue;
+            bool free = true;
+            for (int i = -16; i < len + 16 && free; i++) if (exe[o + i] != 0) free = false;
+            if (free) return cand;
+        }
+        throw new Exception(L.T("pas de place libre dans l'exe pour les routines du patch", "no free space in the exe for the patch routines"));
+    }
+
+    static IEnumerable<uint> Candidates(uint start, uint end)
+    {
+        yield return Cave;
+        for (uint a = (start + 31) & ~15u; a + 16 < end; a += 16) if (a != Cave) yield return a;
+    }
+
+    static bool SameAt(byte[] exe, int o, byte[] v)
+    {
+        for (int i = 0; i < v.Length; i++) if (exe[o + i] != v[i]) return false;
+        return true;
     }
 
     // Controles de la table d'origine : table anglaise plausible ('A' -> 27) et differente de la francaise.
@@ -151,9 +207,11 @@ public static class FrenchPatch
         return null;
     }
 
-    static Asm Routines()
+    static byte[] Part(byte[] b, int at) { byte[] r = new byte[4]; Array.Copy(b, at, r, 0, 4); return r; }
+
+    static Asm Routines(uint org)
     {
-        Asm s = new Asm(Cave);
+        Asm s = new Asm(org);
         s.Label("heights"); s.Emit(LineHeights); s.Align(4);
         s.Label("delta"); s.Dd(16);
         // rank : eax = identifiant de la police (1re image) -> edx = rang dans Zeus_Fonts.sg3, ou -1
