@@ -11,6 +11,7 @@ public class Site
     public int Offset;          // position dans le fichier
     public byte[] Original;     // octets attendus avant le patch
     public byte[] Patched;      // octets ecrits par le patch
+    public bool Value;           // valeur reglable (limites) : une autre valeur deja ecrite est remplacee sans erreur
     public bool Required = true; // indispensable (sinon : saute avec un avertissement si un autre patch l'a deja modifie)
 
     public Site(string name, int offset, byte[] original, byte[] patched)
@@ -24,7 +25,7 @@ public class Site
         if (Offset < 0 || Offset + Original.Length > exe.Length) return SiteState.Other;
         if (Same(exe, Patched)) return SiteState.Patched;
         if (Same(exe, Original)) return SiteState.Original;
-        return SiteState.Other;
+        return Value ? SiteState.Original : SiteState.Other;   // valeur reglable : sera remplacee
     }
 
     bool Same(byte[] exe, byte[] v)

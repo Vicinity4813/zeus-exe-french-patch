@@ -1,6 +1,7 @@
 // Patcheur Zeus : patch FR de l'exe anglais GOG, avec les textes et polices de l'installation francaise de l'utilisateur.
 // Fenetre par defaut ; en ligne de commande :
 //   Patcheur.exe --verifier|--patcher|--annuler --exe <Zeus.exe> [--fr <dossier du jeu francais>] [--sans-exe] [--sans-textes] [--menus] [--voix]
+//                [--editeur gauche|centre|droite]
 using System;
 using System.Drawing;
 using System.IO;
@@ -47,9 +48,10 @@ static class Program
             else if (a == "--sans-textes") o.Texts = false;
             else if (a == "--menus") o.Menus = true;
             else if (a == "--voix") o.Voices = true;
+            else if (a == "--editeur") { o.Editor = true; if (i + 1 < args.Length && !args[i + 1].StartsWith("--")) { string p = args[++i]; o.Layout = p.StartsWith("c") ? MapLayout.Center : p.StartsWith("d") || p.StartsWith("r") ? MapLayout.Right : MapLayout.Left; } }
             else if (a == "--en") L.En = true;
         }
-        if (mode == null || e.ExePath == null) { Console.WriteLine("Patcheur.exe --verifier|--patcher|--annuler --exe <Zeus.exe> [--fr <dossier>] [--sans-exe] [--sans-textes] [--menus] [--voix]"); return 2; }
+        if (mode == null || e.ExePath == null) { Console.WriteLine("Patcheur.exe --verifier|--patcher|--annuler --exe <Zeus.exe> [--fr <dossier>] [--sans-exe] [--sans-textes] [--menus] [--voix] [--editeur gauche|centre|droite]"); return 2; }
         bool ok = true;
         e.Log = (m, k) => { Console.WriteLine((k == LogKind.Error ? "ERREUR " : k == LogKind.Warn ? "attention " : "") + m); if (k == LogKind.Error) ok = false; };
         try
@@ -68,7 +70,8 @@ class MainForm : Form
     Label title, intro, lExe, lFr, lOpt;
     TextBox tExe, tFr;
     Button bExe, bFr, bCheck, bPatch, bUndo;
-    CheckBox cExe, cTexts, cMenus, cVoices;
+    CheckBox cExe, cTexts, cMenus, cVoices, cEditor;
+    RadioButton rLeft, rCenter, rRight;
     RichTextBox log;
     bool busy;
 
@@ -76,7 +79,7 @@ class MainForm : Form
     {
         Font = new Font("Segoe UI", 9.5f);
         AutoScaleMode = AutoScaleMode.Dpi;
-        ClientSize = new Size(760, 620);
+        ClientSize = new Size(760, 680);
         MinimumSize = new Size(640, 520);
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Color.FromArgb(244, 238, 226);
@@ -101,10 +104,16 @@ class MainForm : Form
         cTexts = new CheckBox { Location = new Point(24, 278), AutoSize = true, Checked = true };
         cMenus = new CheckBox { Location = new Point(24, 302), AutoSize = true };
         cVoices = new CheckBox { Location = new Point(24, 326), AutoSize = true };
-        bCheck = new Button { Location = new Point(16, 360), Size = new Size(150, 34) };
-        bPatch = new Button { Location = new Point(176, 360), Size = new Size(200, 34), Font = new Font(Font, FontStyle.Bold) };
-        bUndo = new Button { Location = new Point(386, 360), Size = new Size(200, 34) };
-        log = new RichTextBox { Location = new Point(16, 406), Size = new Size(728, 198), ReadOnly = true, BackColor = Color.White, Font = new Font("Consolas", 9f),
+        cEditor = new CheckBox { Location = new Point(24, 350), AutoSize = true };
+        rLeft = new RadioButton { Location = new Point(48, 376), AutoSize = true, Checked = true };
+        rCenter = new RadioButton { Location = new Point(290, 376), AutoSize = true };
+        rRight = new RadioButton { Location = new Point(450, 376), AutoSize = true };
+        cEditor.CheckedChanged += delegate { rLeft.Enabled = rCenter.Enabled = rRight.Enabled = cEditor.Checked; };
+        rLeft.Enabled = rCenter.Enabled = rRight.Enabled = false;
+        bCheck = new Button { Location = new Point(16, 412), Size = new Size(150, 34) };
+        bPatch = new Button { Location = new Point(176, 412), Size = new Size(200, 34), Font = new Font(Font, FontStyle.Bold) };
+        bUndo = new Button { Location = new Point(386, 412), Size = new Size(200, 34) };
+        log = new RichTextBox { Location = new Point(16, 458), Size = new Size(728, 206), ReadOnly = true, BackColor = Color.White, Font = new Font("Consolas", 9f),
             Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right };
 
         bExe.Click += delegate
@@ -133,7 +142,7 @@ class MainForm : Form
                 Run(e => e.Restore());
         };
 
-        Controls.AddRange(new Control[] { title, lang, intro, lExe, tExe, bExe, lFr, tFr, bFr, lOpt, cExe, cTexts, cMenus, cVoices, bCheck, bPatch, bUndo, log });
+        Controls.AddRange(new Control[] { title, lang, intro, lExe, tExe, bExe, lFr, tFr, bFr, lOpt, cExe, cTexts, cMenus, cVoices, cEditor, rLeft, rCenter, rRight, bCheck, bPatch, bUndo, log });
         ApplyLanguage();
     }
 
@@ -151,12 +160,20 @@ class MainForm : Form
         cTexts.Text = L.T("Textes et polices françaises (indispensable pour les accents)", "French texts and fonts (needed for the accents)");
         cMenus.Text = L.T("Images des menus en français", "French menu pictures");
         cVoices.Text = L.T("Voix, sons et vidéos en français (environ 340 Mo)", "French voices, sounds and videos (about 340 MB)");
+        cEditor.Text = L.T(@"Éditeur : placer les cités sur toute la mappemonde installée (DATA\Zeus_MapOfGreece01.jpg)", @"Editor: place cities anywhere on the installed world map (DATA\Zeus_MapOfGreece01.jpg)");
+        rLeft.Text = L.T("Carte calée à gauche (origine)", "Map on the left (original)");
+        rCenter.Text = L.T("Carte au centre", "Map centred");
+        rRight.Text = L.T("Carte calée à droite", "Map on the right");
         bCheck.Text = L.T("Vérifier", "Check");
         bPatch.Text = L.T("Patcher", "Patch");
         bUndo.Text = L.T("Annuler le patch", "Undo the patch");
     }
 
-    Options CurrentOptions() { return new Options { Exe = cExe.Checked, Texts = cTexts.Checked, Menus = cMenus.Checked, Voices = cVoices.Checked }; }
+    Options CurrentOptions()
+    {
+        return new Options { Exe = cExe.Checked, Texts = cTexts.Checked, Menus = cMenus.Checked, Voices = cVoices.Checked, Editor = cEditor.Checked,
+            Layout = rCenter.Checked ? MapLayout.Center : rRight.Checked ? MapLayout.Right : MapLayout.Left };
+    }
 
     void Check() { if (tExe.Text.Trim().Length > 0) Run(e => e.Patch(CurrentOptions(), true)); }
 

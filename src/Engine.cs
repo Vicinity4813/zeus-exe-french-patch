@@ -9,7 +9,8 @@ public enum LogKind { Info, Ok, Warn, Error }
 
 public class Options
 {
-    public bool Exe = true, Texts = true, Menus, Voices;
+    public bool Exe = true, Texts = true, Menus, Voices, Editor;
+    public MapLayout Layout = MapLayout.Left;
 }
 
 public class Engine
@@ -156,8 +157,9 @@ public class Engine
 
     public bool Patch(Options o, bool dryRun)
     {
-        if (!Analyse()) return false;
-        if (o.Exe && !Status.Patchable) return false;
+        bool frOk = Analyse(!o.Exe);
+        if (exe == null) return false;
+        if (o.Exe && (!frOk || !Status.Patchable)) return false;
         if ((o.Texts || o.Menus || o.Voices) && (string.IsNullOrEmpty(FrDir) || !Directory.Exists(FrDir)))
         {
             Log(L.T("Choisissez le dossier de votre jeu en français pour copier ses fichiers.", "Choose the folder of your French game to copy its files."), LogKind.Error);
@@ -185,11 +187,11 @@ public class Engine
             if (!File.Exists(src) || SameFile(src, dst)) continue;
             toCopy++;
         }
-        bool exeToDo = o.Exe && !Status.Done;
+        bool exeToDo = o.Exe && frOk && !Status.Done;
         Log(string.Format(L.T("À faire : exe {0}, {1} fichier(s) français à copier.", "To do: exe {0}, {1} French file(s) to copy."),
             exeToDo ? L.T("à patcher", "to patch") : L.T("rien", "nothing"), toCopy), LogKind.Info);
-        if (dryRun) { Log(L.T("Vérification terminée : rien n'a été écrit.", "Check done: nothing was written."), LogKind.Ok); return true; }
-        if (!exeToDo && toCopy == 0) { Log(L.T("Rien à faire.", "Nothing to do."), LogKind.Ok); return true; }
+        if (dryRun) { if (o.Editor) EditorStep(o, true); Log(L.T("Vérification terminée : rien n'a été écrit.", "Check done: nothing was written."), LogKind.Ok); return true; }
+        if (!exeToDo && toCopy == 0 && !o.Editor) { Log(L.T("Rien à faire.", "Nothing to do."), LogKind.Ok); return true; }
 
         Directory.CreateDirectory(BackupDir);
         byte[] tableOrig = savedTable;
@@ -230,6 +232,7 @@ public class Engine
             n++;
         }
         if (n > 0) Log(string.Format(L.T("{0} fichier(s) français copié(s) ; les originaux sont dans la sauvegarde.", "{0} French file(s) copied; the originals are in the backup."), n), LogKind.Ok);
+        if (o.Editor && !EditorStep(o, false)) return false;
         Log(L.T("Terminé. Lancez le jeu pour vérifier.", "Done. Start the game to check."), LogKind.Ok);
         return true;
     }
@@ -294,6 +297,76 @@ public class Engine
         }
     }
 
+    // ---- editeur de mappemonde
+
+    // Taille de la mappemonde installee (DATA\Zeus_MapOfGreece01.jpg), ou null.
+    public int[] MapSize()
+    {
+        string data = Path.Combine(GameDir, "DATA");
+        if (!Directory.Exists(data)) return null;
+        foreach (string f in Directory.GetFiles(data, "Zeus_MapOfGreece01.*"))
+        {
+            if (!f.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)) continue;
+            try { using (System.Drawing.Image im = System.Drawing.Image.FromFile(f)) return new[] { im.Width, im.Height }; }
+            catch { }
+        }
+        return null;
+    }
+
+    bool EditorStep(Options o, bool dryRun)
+    {
+        byte[] cur = File.ReadAllBytes(ExePath);
+        if (!EditorPatch.FunctionLooksRight(cur))
+        {
+            Log(L.T("Éditeur : fonction de placement des cités introuvable dans cet exe (autre version ?) : non patché.", "Editor: city placement function not found in this exe (other version?): not patched."), LogKind.Error);
+            return false;
+        }
+        int[] size = MapSize();
+        if (size == null)
+        {
+            Log(L.T("Éditeur : mappemonde introuvable (DATA\\Zeus_MapOfGreece01.jpg) : installez d'abord vos mappemondes.", "Editor: world map not found (DATA\\Zeus_MapOfGreece01.jpg): install your world maps first."), LogKind.Error);
+            return false;
+        }
+        int[] lim = EditorPatch.Limits(size[0], size[1], o.Layout);
+        string where = o.Layout == MapLayout.Left ? L.T("à gauche", "on the left") : o.Layout == MapLayout.Right ? L.T("à droite", "on the right") : L.T("au centre", "centred");
+        Log(string.Format(L.T("Éditeur : mappemonde de {0} x {1} px, carte peinte {2} ; limites autour du centre : gauche {3}, droite {4}, haut {5}, bas {6}.",
+            "Editor: {0} x {1} px world map, painted map {2}; limits around the centre: left {3}, right {4}, top {5}, bottom {6}."), size[0], size[1], where, lim[0], lim[1], lim[2], lim[3]), LogKind.Info);
+        List<Site> es = EditorPatch.Build(cur, lim);
+        Survey sv = Survey.Of(es, cur);
+        foreach (Site x in sv.Unexpected)
+            Log(string.Format(L.T("  {0} déjà modifié par un autre patch : ", "  {0} already changed by another patch: ") + Site.Hex(Sub(cur, x.Offset, x.Original.Length), 8), x.Name), LogKind.Error);
+        if (!sv.Patchable) { Log(L.T("Éditeur : non patché.", "Editor: not patched."), LogKind.Error); return false; }
+        if (sv.Original == 0) { Log(L.T("Éditeur : déjà patché avec ces limites.", "Editor: already patched with these limits."), LogKind.Ok); return true; }
+        if (dryRun) { Log(L.T("Éditeur : à patcher.", "Editor: to patch."), LogKind.Info); return true; }
+
+        Directory.CreateDirectory(BackupDir);
+        string exeBak = Path.Combine(BackupDir, Path.GetFileName(ExePath));
+        if (!File.Exists(exeBak)) File.Copy(ExePath, exeBak);
+        byte[] outb = (byte[])cur.Clone();
+        foreach (Site x in es) Array.Copy(x.Patched, 0, outb, x.Offset, x.Patched.Length);
+        exe = outb;
+        if (!WriteExe(outb)) return false;
+        Log(L.T("Éditeur patché : les cités se placent sur toute la carte peinte de la mappemonde.", "Editor patched: cities can be placed anywhere on the painted map of the world map."), LogKind.Ok);
+        return true;
+    }
+
+    // Annulation du patch de l'editeur : valeurs d'origine (connues), si notre saut est en place.
+    bool EditorRestore()
+    {
+        byte[] cur = File.ReadAllBytes(ExePath);
+        if (!EditorPatch.FunctionLooksRight(cur)) return false;
+        List<Site> es = EditorPatch.Build(cur, null);
+        if (es[0].StateIn(cur) != SiteState.Patched) return false;   // pas notre saut : editeur non patche par nous
+        byte[] outb = (byte[])cur.Clone();
+        foreach (Site x in es) Array.Copy(x.Original, 0, outb, x.Offset, x.Original.Length);
+        exe = outb;
+        if (!WriteExe(outb)) return false;
+        Log(L.T("Éditeur : patch annulé (limites d'origine).", "Editor: patch undone (original limits)."), LogKind.Ok);
+        return true;
+    }
+
+    static byte[] Sub(byte[] b, int off, int n) { byte[] r = new byte[n]; if (off >= 0 && off + n <= b.Length) Array.Copy(b, off, r, 0, n); return r; }
+
     // ---- annulation
 
     public bool Restore()
@@ -311,6 +384,7 @@ public class Engine
             Log(L.T("Exe : patch FR annulé (les autres modifications, comme la résolution, sont conservées).", "Exe: French patch undone (other changes, such as the resolution, are kept)."), LogKind.Ok);
             any = true;
         }
+        if (File.Exists(ExePath) && EditorRestore()) any = true;
         List<string> copied = LoadCopied();
         int n = 0;
         foreach (string f in copied)
