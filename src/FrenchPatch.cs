@@ -189,24 +189,6 @@ public static class FrenchPatch
         return cur['A' - 0x20] == 27 && !SameBytes(cur, frTable);
     }
 
-    // Table francaise dans un exe francais : meme debut que la table anglaise (caracteres 0x20 a 0x5B ; elles different
-    // des 0x5C), puis .a. grave -> 84.
-    public static byte[] FindFrenchTable(byte[] frExe, byte[] enExe)
-    {
-        Pe en = new Pe(enExe), fr;
-        try { fr = new Pe(frExe); } catch { return null; }
-        byte[] head = new byte[0x3C];
-        Array.Copy(en.Get(CharTable, 224), head, head.Length);
-        foreach (uint va in fr.Find(head))
-        {
-            int o = fr.Off(va);
-            if (o < 0 || o + 224 > frExe.Length) continue;
-            byte[] t = fr.Get(va, 224);
-            if (t['A' - 0x20] == 27 && t[0xE0 - 0x20] == 84) return t;
-        }
-        return null;
-    }
-
     static byte[] Part(byte[] b, int at) { byte[] r = new byte[4]; Array.Copy(b, at, r, 0, 4); return r; }
 
     static Asm Routines(uint org)

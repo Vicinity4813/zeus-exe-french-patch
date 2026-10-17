@@ -1,7 +1,7 @@
-// Patcheur Zeus : patch FR de l'exe anglais GOG, avec les textes et polices de l'installation francaise de l'utilisateur.
-// Fenetre par defaut ; en ligne de commande :
-//   Patcheur.exe --verifier|--patcher|--annuler --exe <Zeus.exe> [--fr <dossier du jeu francais>] [--sans-exe] [--sans-textes] [--menus] [--voix]
-//                [--editeur gauche|centre|droite]
+// Patcheur Zeus : met en francais un Zeus.exe anglais (accents, boutons) et adapte l'editeur de mappemonde
+// a des mappemondes plus grandes, sur un exe anglais ou francais de n'importe quelle resolution.
+// En ligne de commande : Patcheur.exe --fr <Zeus.exe> | --editeur <Zeus.exe> [--taille LxH] [--position gauche|centre|droite]
+//                        | --restaurer <Zeus.exe> | --info <Zeus.exe>   (--verifier : sans rien ecrire)
 using System;
 using System.Drawing;
 using System.IO;
@@ -10,15 +10,15 @@ using System.Threading;
 using System.Windows.Forms;
 
 [assembly: System.Reflection.AssemblyTitle("Patcheur Zeus")]
-[assembly: System.Reflection.AssemblyDescription("Patch FR de Zeus : Le Maitre de l'Olympe (exe anglais GOG)")]
+[assembly: System.Reflection.AssemblyDescription("Patch FR et editeur de mappemonde pour Zeus : Le Maitre de l'Olympe")]
 [assembly: System.Reflection.AssemblyCompany("Outils Zeus (projet amateur)")]
 [assembly: System.Reflection.AssemblyProduct("Patcheur Zeus")]
 [assembly: System.Reflection.AssemblyCopyright("© 2026 Vicinity4813 - MIT License")]
 [assembly: System.Resources.NeutralResourcesLanguage("fr-FR")]
 [assembly: System.Runtime.InteropServices.ComVisible(false)]
-[assembly: System.Reflection.AssemblyVersion("0.1.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("0.1.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersion("0.1")]
+[assembly: System.Reflection.AssemblyVersion("1.0.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.0.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersion("1.0")]
 
 static class Program
 {
@@ -35,42 +35,51 @@ static class Program
         return 0;
     }
 
-    static int Cli(string[] args)
+    static int[] Pair(string s) { string[] p = s.ToLowerInvariant().Split('x'); return new[] { int.Parse(p[0]), int.Parse(p[1]) }; }
+
+    static int Cli(string[] a)
     {
-        string mode = null; Engine e = new Engine(); Options o = new Options();
-        for (int i = 0; i < args.Length; i++)
+        string mode = null, exe = null; int[] size = null; MapLayout layout = MapLayout.Left; bool dry = false;
+        for (int i = 0; i < a.Length; i++)
         {
-            string a = args[i];
-            if (a == "--verifier" || a == "--patcher" || a == "--annuler") mode = a;
-            else if (a == "--exe" && i + 1 < args.Length) e.ExePath = Path.GetFullPath(args[++i]);
-            else if (a == "--fr" && i + 1 < args.Length) e.FrDir = Path.GetFullPath(args[++i]);
-            else if (a == "--sans-exe") o.Exe = false;
-            else if (a == "--sans-textes") o.Texts = false;
-            else if (a == "--menus") o.Menus = true;
-            else if (a == "--voix") o.Voices = true;
-            else if (a == "--editeur") { o.Editor = true; if (i + 1 < args.Length && !args[i + 1].StartsWith("--")) { string p = args[++i]; o.Layout = p.StartsWith("c") ? MapLayout.Center : p.StartsWith("d") || p.StartsWith("r") ? MapLayout.Right : MapLayout.Left; } }
-            else if (a == "--en") L.En = true;
+            if ((a[i] == "--fr" || a[i] == "--editeur" || a[i] == "--restaurer" || a[i] == "--info") && i + 1 < a.Length) { mode = a[i]; exe = Path.GetFullPath(a[++i]); }
+            else if (a[i] == "--taille" && i + 1 < a.Length) size = Pair(a[++i]);
+            else if (a[i] == "--position" && i + 1 < a.Length) { string p = a[++i]; layout = p.StartsWith("c") ? MapLayout.Center : p.StartsWith("d") || p.StartsWith("r") ? MapLayout.Right : MapLayout.Left; }
+            else if (a[i] == "--verifier") dry = true;
+            else if (a[i] == "--en") L.En = true;
         }
-        if (mode == null || e.ExePath == null) { Console.WriteLine("Patcheur.exe --verifier|--patcher|--annuler --exe <Zeus.exe> [--fr <dossier>] [--sans-exe] [--sans-textes] [--menus] [--voix] [--editeur gauche|centre|droite]"); return 2; }
-        bool ok = true;
-        e.Log = (m, k) => { Console.WriteLine((k == LogKind.Error ? "ERREUR " : k == LogKind.Warn ? "attention " : "") + m); if (k == LogKind.Error) ok = false; };
+        if (mode == null) { Console.WriteLine("Patcheur.exe --fr <Zeus.exe> | --editeur <Zeus.exe> [--taille LxH] [--position gauche|centre|droite] | --restaurer <Zeus.exe> | --info <Zeus.exe> [--verifier]"); return 2; }
+        bool err = false;
+        Core.Log = (m, k) => { Console.WriteLine((k == LogKind.Error ? "ERREUR " : k == LogKind.Warn ? "attention " : "") + m); if (k == LogKind.Error) err = true; };
         try
         {
-            if (mode == "--annuler") e.Restore();
-            else e.Patch(o, mode == "--verifier");
+            if (mode == "--info") Console.WriteLine(MainForm.Describe(exe));
+            else if (mode == "--fr") Core.PatchFr(exe, dry);
+            else if (mode == "--restaurer") Core.Restore(exe);
+            else
+            {
+                if (size == null)
+                {
+                    int[] r = Core.ResolutionOf(File.ReadAllBytes(exe));
+                    if (r == null) { Console.WriteLine("ERREUR résolution introuvable : indiquez --taille"); return 1; }
+                    size = Core.ViewOf(r[0], r[1]);
+                }
+                Core.PatchEditor(exe, size[0], size[1], layout, dry);
+            }
         }
         catch (Exception ex) { Console.WriteLine("ERREUR " + ex.Message); return 1; }
-        return ok ? 0 : 1;
+        return err ? 1 : 0;
     }
 }
 
 class MainForm : Form
 {
     ComboBox lang;
-    Label title, intro, lExe, lFr, lOpt;
-    TextBox tExe, tFr;
-    Button bExe, bFr, bCheck, bPatch, bUndo;
-    CheckBox cExe, cTexts, cMenus, cVoices, cEditor;
+    Label title, intro, lExe, lInfo, lFrText, lSize, lX, lPos;
+    TextBox tExe;
+    Button bExe, bFr, bEditor, bRestore;
+    GroupBox gFr, gEd;
+    NumericUpDown nW, nH;
     RadioButton rLeft, rCenter, rRight;
     RichTextBox log;
     bool busy;
@@ -79,8 +88,8 @@ class MainForm : Form
     {
         Font = new Font("Segoe UI", 9.5f);
         AutoScaleMode = AutoScaleMode.Dpi;
-        ClientSize = new Size(760, 680);
-        MinimumSize = new Size(640, 520);
+        ClientSize = new Size(760, 640);
+        MinimumSize = new Size(680, 560);
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Color.FromArgb(244, 238, 226);
         try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
@@ -90,116 +99,135 @@ class MainForm : Form
         lang.Items.AddRange(new object[] { "Français", "English" });
         lang.SelectedIndex = L.En ? 1 : 0;
         lang.Location = new Point(ClientSize.Width - lang.Width - 16, 14);
-        lang.SelectedIndexChanged += delegate { L.En = lang.SelectedIndex == 1; L.Save(); ApplyLanguage(); };
+        lang.SelectedIndexChanged += delegate { L.En = lang.SelectedIndex == 1; L.Save(); ApplyLanguage(); ShowInfo(); };
 
-        intro = new Label { Location = new Point(16, 52), Size = new Size(728, 64), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
-        lExe = new Label { Location = new Point(16, 122), AutoSize = true };
-        tExe = new TextBox { Location = new Point(16, 142), Width = 620, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
-        bExe = new Button { Location = new Point(644, 140), Size = new Size(100, 27), Anchor = AnchorStyles.Top | AnchorStyles.Right };
-        lFr = new Label { Location = new Point(16, 176), AutoSize = true };
-        tFr = new TextBox { Location = new Point(16, 196), Width = 620, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
-        bFr = new Button { Location = new Point(644, 194), Size = new Size(100, 27), Anchor = AnchorStyles.Top | AnchorStyles.Right };
-        lOpt = new Label { Location = new Point(16, 232), AutoSize = true, Font = new Font(Font, FontStyle.Bold) };
-        cExe = new CheckBox { Location = new Point(24, 254), AutoSize = true, Checked = true };
-        cTexts = new CheckBox { Location = new Point(24, 278), AutoSize = true, Checked = true };
-        cMenus = new CheckBox { Location = new Point(24, 302), AutoSize = true };
-        cVoices = new CheckBox { Location = new Point(24, 326), AutoSize = true };
-        cEditor = new CheckBox { Location = new Point(24, 350), AutoSize = true };
-        rLeft = new RadioButton { Location = new Point(48, 376), AutoSize = true, Checked = true };
-        rCenter = new RadioButton { Location = new Point(290, 376), AutoSize = true };
-        rRight = new RadioButton { Location = new Point(450, 376), AutoSize = true };
-        cEditor.CheckedChanged += delegate { rLeft.Enabled = rCenter.Enabled = rRight.Enabled = cEditor.Checked; };
-        rLeft.Enabled = rCenter.Enabled = rRight.Enabled = false;
-        bCheck = new Button { Location = new Point(16, 412), Size = new Size(150, 34) };
-        bPatch = new Button { Location = new Point(176, 412), Size = new Size(200, 34), Font = new Font(Font, FontStyle.Bold) };
-        bUndo = new Button { Location = new Point(386, 412), Size = new Size(200, 34) };
-        log = new RichTextBox { Location = new Point(16, 458), Size = new Size(728, 206), ReadOnly = true, BackColor = Color.White, Font = new Font("Consolas", 9f),
+        intro = new Label { Location = new Point(16, 52), Size = new Size(728, 44), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+        lExe = new Label { Location = new Point(16, 100), AutoSize = true };
+        tExe = new TextBox { Location = new Point(16, 120), Width = 620, Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+        bExe = new Button { Location = new Point(644, 118), Size = new Size(100, 27), Anchor = AnchorStyles.Top | AnchorStyles.Right };
+        lInfo = new Label { Location = new Point(16, 150), Size = new Size(728, 22), ForeColor = Color.FromArgb(90, 50, 20), Font = new Font(Font, FontStyle.Bold), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+
+        gFr = new GroupBox { Location = new Point(16, 178), Size = new Size(728, 96), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+        lFrText = new Label { Location = new Point(12, 22), Size = new Size(500, 64) };
+        bFr = new Button { Location = new Point(524, 34), Size = new Size(190, 36), Font = new Font(Font, FontStyle.Bold), Anchor = AnchorStyles.Top | AnchorStyles.Right };
+        gFr.Controls.AddRange(new Control[] { lFrText, bFr });
+
+        gEd = new GroupBox { Location = new Point(16, 282), Size = new Size(728, 110), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+        lSize = new Label { Location = new Point(12, 26), AutoSize = true };
+        nW = new NumericUpDown { Location = new Point(12, 48), Width = 80, Minimum = 838, Maximum = 7680, Value = 838 };
+        lX = new Label { Location = new Point(96, 51), AutoSize = true, Text = "x" };
+        nH = new NumericUpDown { Location = new Point(112, 48), Width = 80, Minimum = 600, Maximum = 4320, Value = 738 };
+        lPos = new Label { Location = new Point(214, 26), AutoSize = true };
+        rLeft = new RadioButton { Location = new Point(214, 48), AutoSize = true, Checked = true };
+        rCenter = new RadioButton { Location = new Point(214, 72), AutoSize = true };
+        rRight = new RadioButton { Location = new Point(360, 72), AutoSize = true };
+        bEditor = new Button { Location = new Point(524, 40), Size = new Size(190, 36), Font = new Font(Font, FontStyle.Bold), Anchor = AnchorStyles.Top | AnchorStyles.Right };
+        gEd.Controls.AddRange(new Control[] { lSize, nW, lX, nH, lPos, rLeft, rCenter, rRight, bEditor });
+
+        bRestore = new Button { Location = new Point(16, 402), Size = new Size(260, 32) };
+        log = new RichTextBox { Location = new Point(16, 444), Size = new Size(728, 180), ReadOnly = true, BackColor = Color.White, Font = new Font("Consolas", 9f),
             Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right };
 
         bExe.Click += delegate
         {
-            using (OpenFileDialog d = new OpenFileDialog { Filter = "Zeus.exe|*.exe", FileName = "Zeus.exe" })
-                if (d.ShowDialog(this) == DialogResult.OK) { tExe.Text = d.FileName; Check(); }
+            using (OpenFileDialog d = new OpenFileDialog { Filter = "Zeus.exe|*.exe" })
+                if (d.ShowDialog(this) == DialogResult.OK) { tExe.Text = d.FileName; ShowInfo(); }
         };
-        bFr.Click += delegate
+        tExe.Leave += delegate { ShowInfo(); };
+        bFr.Click += delegate { Run(p => Core.PatchFr(p, false)); };
+        bEditor.Click += delegate
         {
-            using (FolderBrowserDialog d = new FolderBrowserDialog())
-            {
-                d.Description = L.T("Dossier du jeu en français (celui qui contient son Zeus.exe et Zeus_Text.eng)", "Folder of the French game (the one with its Zeus.exe and Zeus_Text.eng)");
-                if (d.ShowDialog(this) == DialogResult.OK) { tFr.Text = d.SelectedPath; Check(); }
-            }
+            int w = (int)nW.Value, h = (int)nH.Value;
+            MapLayout lay = rCenter.Checked ? MapLayout.Center : rRight.Checked ? MapLayout.Right : MapLayout.Left;
+            Run(p => Core.PatchEditor(p, w, h, lay, false));
         };
-        bCheck.Click += delegate { Check(); };
-        bPatch.Click += delegate
+        bRestore.Click += delegate
         {
-            if (MessageBox.Show(this, L.T("Patcher maintenant ? Les fichiers remplacés sont sauvegardés et le patch peut être annulé.",
-                                          "Patch now? Replaced files are backed up and the patch can be undone."), Text, MessageBoxButtons.OKCancel) == DialogResult.OK)
-                Run(e => e.Patch(CurrentOptions(), false));
-        };
-        bUndo.Click += delegate
-        {
-            if (MessageBox.Show(this, L.T("Annuler le patch FR et remettre les fichiers d'origine ?", "Undo the French patch and put the original files back?"), Text, MessageBoxButtons.OKCancel) == DialogResult.OK)
-                Run(e => e.Restore());
+            if (MessageBox.Show(this, L.T("Remettre l'exe d'origine (copie .bak) ?", "Put the original exe back (.bak copy)?"), Text, MessageBoxButtons.OKCancel) == DialogResult.OK)
+                Run(p => Core.Restore(p));
         };
 
-        Controls.AddRange(new Control[] { title, lang, intro, lExe, tExe, bExe, lFr, tFr, bFr, lOpt, cExe, cTexts, cMenus, cVoices, cEditor, rLeft, rCenter, rRight, bCheck, bPatch, bUndo, log });
+        Controls.AddRange(new Control[] { title, lang, intro, lExe, tExe, bExe, lInfo, gFr, gEd, bRestore, log });
         ApplyLanguage();
+        ShowInfo();
+    }
+
+    // Description courte d'un exe : compilation et resolution
+    public static string Describe(string path)
+    {
+        if (!File.Exists(path)) return "";
+        byte[] b = File.ReadAllBytes(path);
+        string build = Core.BuildOf(b);
+        if (build == null) return L.T("Exe non reconnu (autre compilation : russe, CD d'origine protégé…)", "Exe not recognised (other build: Russian, protected original CD…)");
+        int[] r = Core.ResolutionOf(b);
+        string res = r == null ? "?" : r[0] + " x " + r[1];
+        bool en = build != "français";
+        return (en ? L.T("Exe anglais 2.1.4.0", "English exe 2.1.4.0") : L.T("Exe français", "French exe")) + " — " + res
+            + (File.Exists(path + ".bak") ? L.T("  (copie .bak présente)", "  (.bak copy present)") : "");
+    }
+
+    void ShowInfo()
+    {
+        string p = tExe.Text.Trim();
+        lInfo.Text = Describe(p);
+        if (!File.Exists(p)) return;
+        byte[] b = File.ReadAllBytes(p);
+        string build = Core.BuildOf(b);
+        bFr.Enabled = build != null && build != "français";
+        bEditor.Enabled = build != null;
+        int[] r = Core.ResolutionOf(b);
+        if (r != null)
+        {
+            int[] v = Core.ViewOf(r[0], r[1]);
+            nW.Value = Math.Max(nW.Minimum, Math.Min(nW.Maximum, v[0]));
+            nH.Value = Math.Max(nH.Minimum, Math.Min(nH.Maximum, v[1]));
+        }
     }
 
     void ApplyLanguage()
     {
-        Text = L.T("Patcheur Zeus - patch FR", "Zeus Patcher - French patch");
-        title.Text = L.T("Patch FR de Zeus (version anglaise GOG)", "French patch for Zeus (English GOG version)");
-        intro.Text = L.T("Met en français la version anglaise GOG : accents, boutons et textes du jeu. Les textes, polices et images viennent de VOTRE jeu en français (CD ou installation) : rien n'est fourni par ce programme. Fonctionne aussi sur un exe déjà passé au Resolution Customiser. Tout est sauvegardé et peut être annulé.",
-                         "Turns the English GOG version into French: accents, buttons and game texts. Texts, fonts and pictures come from YOUR French game (CD or install): this program provides none of them. Also works on an exe already patched by the Resolution Customiser. Everything is backed up and can be undone.");
-        lExe.Text = L.T("Zeus.exe à patcher (version anglaise GOG) :", "Zeus.exe to patch (English GOG version):");
-        lFr.Text = L.T("Dossier de votre jeu en français :", "Folder of your French game:");
-        bExe.Text = bFr.Text = L.T("Parcourir…", "Browse…");
-        lOpt.Text = L.T("À faire :", "To do:");
-        cExe.Text = L.T("Exe : affichage du français (accents, hauteur des lignes, boutons)", "Exe: French display (accents, line heights, buttons)");
-        cTexts.Text = L.T("Textes et polices françaises (indispensable pour les accents)", "French texts and fonts (needed for the accents)");
-        cMenus.Text = L.T("Images des menus en français", "French menu pictures");
-        cVoices.Text = L.T("Voix, sons et vidéos en français (environ 340 Mo)", "French voices, sounds and videos (about 340 MB)");
-        cEditor.Text = L.T(@"Éditeur : placer les cités sur toute la mappemonde installée (DATA\Zeus_MapOfGreece01.jpg)", @"Editor: place cities anywhere on the installed world map (DATA\Zeus_MapOfGreece01.jpg)");
-        rLeft.Text = L.T("Carte calée à gauche (origine)", "Map on the left (original)");
-        rCenter.Text = L.T("Carte au centre", "Map centred");
-        rRight.Text = L.T("Carte calée à droite", "Map on the right");
-        bCheck.Text = L.T("Vérifier", "Check");
-        bPatch.Text = L.T("Patcher", "Patch");
-        bUndo.Text = L.T("Annuler le patch", "Undo the patch");
+        Text = L.T("Patcheur Zeus", "Zeus Patcher");
+        title.Text = L.T("Patcheur Zeus : français et éditeur", "Zeus Patcher: French and editor");
+        intro.Text = L.T("Modifie seulement le Zeus.exe choisi (une copie « .bak » de l'original est faite à côté). Exe anglais 2.1.4.0 (GOG, Steam, versions widescreen) ou exe français, quelle que soit la résolution.",
+                         "Only changes the chosen Zeus.exe (a \".bak\" copy of the original is made next to it). English 2.1.4.0 exe (GOG, Steam, widescreen versions) or French exe, at any resolution.");
+        lExe.Text = L.T("Zeus.exe à patcher :", "Zeus.exe to patch:");
+        bExe.Text = L.T("Parcourir…", "Browse…");
+        gFr.Text = L.T("1. Patch FR (exe anglais)", "1. French patch (English exe)");
+        lFrText.Text = L.T("Accents (table des caractères), hauteur des lignes, boutons élargis et textes du menu, comme l'édition française. Le jeu doit avoir les textes et polices françaises (Zeus_Text.eng, Zeus_MM.eng, Zeus eventmsg.txt, Zeus_Fonts).",
+                           "Accents (character table), line heights, widened buttons and menu texts, as in the French edition. The game needs the French texts and fonts (Zeus_Text.eng, Zeus_MM.eng, Zeus eventmsg.txt, Zeus_Fonts).");
+        bFr.Text = L.T("Patcher en français", "Patch to French");
+        gEd.Text = L.T("2. Éditeur de mappemonde (exe anglais ou français)", "2. World map editor (English or French exe)");
+        lSize.Text = L.T("Taille de la mappemonde :", "World map size:");
+        lPos.Text = L.T("Carte dans la mappemonde :", "Map in the world map:");
+        rLeft.Text = L.T("À gauche (comme l'originale)", "Left (like the original)");
+        rCenter.Text = L.T("Au centre", "Centred");
+        rRight.Text = L.T("À droite", "Right");
+        bEditor.Text = L.T("Patcher l'éditeur", "Patch the editor");
+        bRestore.Text = L.T("Remettre l'exe d'origine (.bak)", "Put the original exe back (.bak)");
     }
 
-    Options CurrentOptions()
-    {
-        return new Options { Exe = cExe.Checked, Texts = cTexts.Checked, Menus = cMenus.Checked, Voices = cVoices.Checked, Editor = cEditor.Checked,
-            Layout = rCenter.Checked ? MapLayout.Center : rRight.Checked ? MapLayout.Right : MapLayout.Left };
-    }
-
-    void Check() { if (tExe.Text.Trim().Length > 0) Run(e => e.Patch(CurrentOptions(), true)); }
-
-    void Run(Action<Engine> work)
+    void Run(Func<string, bool> work)
     {
         if (busy) return;
+        string p = tExe.Text.Trim();
+        if (p.Length == 0) return;
         busy = true;
         log.Clear();
-        foreach (Control c in new Control[] { bCheck, bPatch, bUndo, bExe, bFr }) c.Enabled = false;
-        Engine e = new Engine { ExePath = tExe.Text.Trim(), FrDir = tFr.Text.Trim() };
-        e.Log = (m, k) => BeginInvoke((Action)(() => Append(m, k)));
+        foreach (Control c in new Control[] { bFr, bEditor, bRestore, bExe }) c.Enabled = false;
+        Core.Log = (m, k) => BeginInvoke((Action)(() =>
+        {
+            log.SelectionStart = log.TextLength;
+            log.SelectionColor = k == LogKind.Error ? Color.FromArgb(180, 20, 20) : k == LogKind.Warn ? Color.FromArgb(170, 100, 0) : k == LogKind.Ok ? Color.FromArgb(20, 120, 40) : Color.Black;
+            log.AppendText(m + Environment.NewLine);
+            log.ScrollToCaret();
+        }));
         Thread t = new Thread(() =>
         {
-            try { work(e); }
-            catch (Exception ex) { BeginInvoke((Action)(() => Append(L.T("Erreur : ", "Error: ") + ex.Message, LogKind.Error))); }
-            BeginInvoke((Action)(() => { busy = false; foreach (Control c in new Control[] { bCheck, bPatch, bUndo, bExe, bFr }) c.Enabled = true; }));
+            try { work(p); }
+            catch (Exception ex) { Core.Log(L.T("Erreur : ", "Error: ") + ex.Message, LogKind.Error); }
+            BeginInvoke((Action)(() => { busy = false; bRestore.Enabled = bExe.Enabled = true; ShowInfo(); }));
         });
         t.IsBackground = true;
         t.Start();
-    }
-
-    void Append(string m, LogKind k)
-    {
-        log.SelectionStart = log.TextLength;
-        log.SelectionColor = k == LogKind.Error ? Color.FromArgb(180, 20, 20) : k == LogKind.Warn ? Color.FromArgb(170, 100, 0) : k == LogKind.Ok ? Color.FromArgb(20, 120, 40) : Color.Black;
-        log.AppendText(m + Environment.NewLine);
-        log.ScrollToCaret();
     }
 }
