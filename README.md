@@ -5,7 +5,7 @@
 
 Two patches for `Zeus.exe`, in one small Windows program:
 
-1. **French patch** — turns an **English `Zeus.exe`** (2.1.4.0: GOG, Steam and every widescreen version, at any resolution) into one that displays the French texts correctly: accents, line heights, wider buttons, menu text positions, as in the French edition.
+1. **French patch** (available from the French interface only) — turns an **English `Zeus.exe`** (2.1.4.0: GOG, Steam and every widescreen version, at any resolution) into one that displays the French texts correctly: accents, line heights, wider buttons, menu text positions, as in the French edition.
 2. **Scenario editor patch — any resolution, any world map, English or French exe.** The original adventure editor can only place cities on the small 838 × 738 world map. This patch, to our knowledge the first of its kind, makes it work with an **enlarged world map of any size**: cities can be placed anywhere on the painted map, set on the left (like the original), centred or on the right of the picture. The world map size is suggested from the resolution read in the exe.
 
 Only the chosen `Zeus.exe` is changed. A `Zeus.exe.bak` copy of the original is made first, and one button puts it back.
@@ -19,7 +19,7 @@ Get `Zeus-Patcher-1.0.zip` from the **[Releases](../../releases)** page: the pro
 ## Usage
 
 1. Run `Patcheur Zeus.exe` and choose your `Zeus.exe`. The program shows what it found: English or French exe, and its resolution.
-2. **Patch to French** (English exe only).
+2. **Patch to French** (English exe, French interface only; the button is greyed out in the English interface).
 3. **Patch the editor**: check the world map size and where the painted map sits in it, then click.
 
 **Put the original exe back** restores the `.bak` copy.

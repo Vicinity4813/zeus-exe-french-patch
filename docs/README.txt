@@ -4,6 +4,7 @@ Zeus Patcher 1.0 - Zeus: Master of Olympus / Poseidon
 Two patches for Zeus.exe, use either or both:
 
 1. FRENCH PATCH: turns an English Zeus.exe into a French one
+   (French interface only: the button is greyed out in the English interface)
    For an English 2.1.4.0 Zeus.exe: GOG, Steam and all its widescreen versions
    (JackFuste exes, Resolution Customiser...), at any resolution.
    Fixes what the English exe gets wrong with French texts: accents, line heights,

@@ -54,6 +54,7 @@ static class Program
         try
         {
             if (mode == "--info") Console.WriteLine(MainForm.Describe(exe));
+            else if (mode == "--fr" && L.En) { Console.WriteLine("ERREUR French patch: French interface only"); return 1; }
             else if (mode == "--fr") Core.PatchFr(exe, dry);
             else if (mode == "--restaurer") Core.Restore(exe);
             else
@@ -170,10 +171,12 @@ class MainForm : Form
     {
         string p = tExe.Text.Trim();
         lInfo.Text = Describe(p);
+        bFr.Enabled = false; bEditor.Enabled = false;
         if (!File.Exists(p)) return;
         byte[] b = File.ReadAllBytes(p);
         string build = Core.BuildOf(b);
-        bFr.Enabled = build != null && build != "français";
+        // Patch FR : seulement depuis l'interface francaise (grise en anglais)
+        bFr.Enabled = !L.En && build != null && build != "français";
         bEditor.Enabled = build != null;
         int[] r = Core.ResolutionOf(b);
         if (r != null)
@@ -192,7 +195,7 @@ class MainForm : Form
                          "Only changes the chosen Zeus.exe (a \".bak\" copy of the original is made next to it). English 2.1.4.0 exe (GOG, Steam, widescreen versions) or French exe, at any resolution.");
         lExe.Text = L.T("Zeus.exe à patcher :", "Zeus.exe to patch:");
         bExe.Text = L.T("Parcourir…", "Browse…");
-        gFr.Text = L.T("1. Patch FR (exe anglais)", "1. French patch (English exe)");
+        gFr.Text = L.T("1. Patch FR (exe anglais)", "1. French patch (English exe) - French interface only");
         lFrText.Text = L.T("Accents (table des caractères), hauteur des lignes, boutons élargis et textes du menu, comme l'édition française. Le jeu doit avoir les textes et polices françaises (Zeus_Text.eng, Zeus_MM.eng, Zeus eventmsg.txt, Zeus_Fonts).",
                            "Accents (character table), line heights, widened buttons and menu texts, as in the French edition. The game needs the French texts and fonts (Zeus_Text.eng, Zeus_MM.eng, Zeus eventmsg.txt, Zeus_Fonts).");
         bFr.Text = L.T("Patcher en français", "Patch to French");
