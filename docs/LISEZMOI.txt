@@ -1,0 +1,82 @@
+Patcheur Zeus 1.0 - Zeus : Le Maître de l'Olympe / Poséidon
+============================================================
+
+Deux patchs pour Zeus.exe, au choix :
+
+1. PATCH FR : met en français un Zeus.exe anglais
+   Pour un Zeus.exe anglais 2.1.4.0 : GOG, Steam et toutes ses versions widescreen
+   (exe de JackFuste, Resolution Customiser...), quelle que soit la résolution.
+   Corrige ce que l'exe anglais affiche mal avec les textes français : accents,
+   hauteur des lignes, boutons trop étroits, textes du menu mal placés.
+
+2. PATCH DE L'ÉDITEUR DE SCÉNARIOS : n'importe quelle résolution, n'importe quelle mappemonde
+   Pour un Zeus.exe anglais 2.1.4.0 ou un Zeus.exe français.
+   L'éditeur d'origine ne sait placer les cités que dans la petite mappemonde de 838 x 738.
+   Ce patch lui fait accepter une mappemonde agrandie, de n'importe quelle taille :
+   les cités se placent sur toute la carte peinte, calée à gauche (comme l'originale),
+   au centre ou à droite de l'image. La taille est proposée d'après la résolution lue
+   dans l'exe et peut être changée.
+
+Le programme ne modifie que le Zeus.exe choisi. Une copie de l'original (Zeus.exe.bak)
+est faite à côté avant la première modification ; le bouton « Remettre l'exe d'origine »
+la remet en place.
+
+
+Pour avoir un jeu 100 % français à partir du jeu anglais
+---------------------------------------------------------
+Le patch FR corrige l'exe ; les textes, polices, images et voix françaises viennent de
+VOTRE jeu français officiel (CD ou installation). Copiez-les dans le dossier du jeu
+anglais, aux mêmes emplacements :
+
+  Indispensable (textes et lettres accentuées) :
+    Zeus_Text.eng
+    Zeus_MM.eng
+    Model\Zeus eventmsg.txt
+    DATA\Zeus_Fonts.sg3
+    DATA\zeus_Fonts.555
+
+  Images des menus et des écrans de fin (texte en français) :
+    DATA\Zeus_FE_ChooseGame.jpg
+    DATA\Zeus_FE_CampaignSelection.JPG
+    DATA\Zeus_FE_MissionIntroduction.jpg
+    DATA\Zeus_FE_tutorials.JPG
+    DATA\Zeus_FE_Registry.jpg
+    DATA\Poseidon_FE_MainMenu.JPG
+    DATA\Poseidon_FE_Registry.jpg
+    DATA\Zeus_Victory.jpg
+    DATA\Zeus_Defeat.jpg
+    DATA\scoreb.jpg
+
+  Voix, sons et vidéo d'introduction :
+    Audio\                      (tout le dossier, environ 340 Mo)
+    Binks\Zeus_Intro.bik
+    Binks\Zeus_Intro_HiQ.bik
+
+  Campagnes et tutoriels en français (dossier Adventures\) :
+    les 16 campagnes Zeus (#La naissance de l'Atlantide.pak ... }Jeu ouvert - Economie.pak),
+    les 8 dossiers des aventures Poséidon (L'odyssée, La naissance de Troie,
+    La révolte maya, Les plus jeunes jumeaux, Atlantide, la cité engloutie,
+    Jeu ouvert - Armée 2, Jeu ouvert - Bac à sable 2, Jeu ouvert - Economie 2),
+    les tutoriels (agora.pak ... warrior.pak) et tutorial00.sav à tutorial15.sav.
+    Déplacez ailleurs les campagnes anglaises du dossier Adventures (sans les supprimer) :
+    sinon chaque campagne apparaît deux fois.
+
+  Inutile : Zeus_Editor_Text.eng (identique dans les deux versions), Zeus.ini, Zeus.inf.
+  Les sauvegardes restent compatibles entre les deux langues.
+
+
+Mappemondes plein écran
+-----------------------
+Avec une mappemonde agrandie, utilisez World Map Converter (Convertisseur mappemonde,
+https://github.com/Vicinity4813/zeus-world-maps) : il replace les cités, noms de régions
+et routes des scénarios (.pak, .set) et des sauvegardes (.sav) sur la carte agrandie,
+en gardant une copie .bak des originaux. Puis passez le patch de l'éditeur avec la même
+taille de mappemonde et la même position de carte.
+
+
+Non reconnus : exe russes, exe du CD d'origine protégés (SecuROM).
+Windows peut afficher « Windows a protégé votre ordinateur » au premier lancement
+(programme récent, non signé) : « Informations complémentaires » puis « Exécuter quand même ».
+
+Merci à zeus-poseidon-arm64 (nic0lasm) pour sa documentation de l'affichage du texte.
+Licence MIT - Vicinity4813. Zeus et Poséidon sont des jeux d'Impressions Games / Sierra.
