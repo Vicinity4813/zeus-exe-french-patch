@@ -157,6 +157,12 @@ public class Engine
 
     public bool Patch(Options o, bool dryRun)
     {
+        // Exe deja francais (compilation francaise reconnue a sa fonction de l'editeur) : seul l'editeur est a patcher
+        if (File.Exists(ExePath) && EditorPatch.Recognised(File.ReadAllBytes(ExePath)) == "français" && (o.Exe || o.Texts || o.Menus || o.Voices))
+        {
+            Log(L.T("Exe français : le patch FR est inutile, seul l'éditeur peut être patché.", "French exe: the French patch is not needed, only the editor can be patched."), LogKind.Info);
+            o.Exe = o.Texts = o.Menus = o.Voices = false;
+        }
         bool frOk = Analyse(!o.Exe);
         if (exe == null) return false;
         if (o.Exe && (!frOk || !Status.Patchable)) return false;
