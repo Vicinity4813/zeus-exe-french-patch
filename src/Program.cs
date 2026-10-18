@@ -26,7 +26,6 @@ static class Program
     [STAThread]
     static int Main(string[] args)
     {
-        L.Load();
         if (args.Length > 0) { AttachConsole(-1); return Cli(args); }
         Application.EnableVisualStyles();
         Application.SetCompatibleTextRenderingDefault(false);
@@ -43,7 +42,6 @@ static class Program
         {
             if ((a[i] == "--fr" || a[i] == "--restaurer" || a[i] == "--info") && i + 1 < a.Length) { mode = a[i]; exe = Path.GetFullPath(a[++i]); }
             else if (a[i] == "--verifier") dry = true;
-            else if (a[i] == "--en") L.En = true;
         }
         if (mode == null) { Console.WriteLine("Patcheur.exe --fr <Zeus.exe> | --restaurer <Zeus.exe> | --info <Zeus.exe> [--verifier]"); return 2; }
         bool err = false;
@@ -51,7 +49,6 @@ static class Program
         try
         {
             if (mode == "--info") Console.WriteLine(MainForm.Describe(exe));
-            else if (mode == "--fr" && L.En) { Console.WriteLine("ERREUR French patch: French interface only"); return 1; }
             else if (mode == "--fr") Core.PatchFr(exe, dry);
             else if (mode == "--restaurer") Core.Restore(exe);
         }
@@ -62,7 +59,6 @@ static class Program
 
 class MainForm : Form
 {
-    ComboBox lang;
     Label title, intro, lExe, lInfo, lFrText;
     TextBox tExe;
     Button bExe, bFr, bRestore;
@@ -81,11 +77,6 @@ class MainForm : Form
         try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
 
         title = new Label { Font = new Font("Segoe UI", 15f, FontStyle.Bold), ForeColor = Color.FromArgb(90, 50, 20), AutoSize = true, Location = new Point(16, 12) };
-        lang = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 110, Anchor = AnchorStyles.Top | AnchorStyles.Right };
-        lang.Items.AddRange(new object[] { "Français", "English" });
-        lang.SelectedIndex = L.En ? 1 : 0;
-        lang.Location = new Point(ClientSize.Width - lang.Width - 16, 14);
-        lang.SelectedIndexChanged += delegate { L.En = lang.SelectedIndex == 1; L.Save(); ApplyLanguage(); ShowInfo(); };
 
         intro = new Label { Location = new Point(16, 52), Size = new Size(728, 44), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
         lExe = new Label { Location = new Point(16, 100), AutoSize = true };
@@ -115,7 +106,7 @@ class MainForm : Form
                 Run(p => Core.Restore(p));
         };
 
-        Controls.AddRange(new Control[] { title, lang, intro, lExe, tExe, bExe, lInfo, gFr, bRestore, log });
+        Controls.AddRange(new Control[] { title, intro, lExe, tExe, bExe, lInfo, gFr, bRestore, log });
         ApplyLanguage();
         ShowInfo();
     }
@@ -142,8 +133,7 @@ class MainForm : Form
         if (!File.Exists(p)) return;
         byte[] b = File.ReadAllBytes(p);
         string build = Core.BuildOf(b);
-        // Patch FR : seulement depuis l'interface francaise (grise en anglais)
-        bFr.Enabled = !L.En && build != null && build != "français";
+        bFr.Enabled = build != null && build != "français";
     }
 
     void ApplyLanguage()
