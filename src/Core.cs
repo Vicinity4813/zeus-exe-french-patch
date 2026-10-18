@@ -77,29 +77,6 @@ public static class Core
         return true;
     }
 
-    // ---- editeur
-
-    public static bool PatchEditor(string path, int w, int h, MapLayout layout, bool dryRun)
-    {
-        byte[] exe = Load(path);
-        if (exe == null) return false;
-        if (BuildOf(exe) == null) { Log(L.T("Exe non reconnu : fonction de placement des cités introuvable.", "Exe not recognised: city placement function not found."), LogKind.Error); return false; }
-        int[] lim = EditorPatch.Limits(w, h, layout);
-        Log(string.Format(L.T("Éditeur : mappemonde {0} x {1}, limites autour du centre : gauche {2}, droite {3}, haut {4}, bas {5}.",
-            "Editor: {0} x {1} world map, limits around the centre: left {2}, right {3}, top {4}, bottom {5}."), w, h, lim[0], lim[1], lim[2], lim[3]), LogKind.Info);
-        List<Site> sites = EditorPatch.Build(exe, lim);
-        Survey sv = Survey.Of(sites, exe);
-        foreach (Site x in sv.Unexpected) Log(string.Format(L.T("  {0} : déjà modifié par un autre patch", "  {0}: already changed by another patch"), x.Name), LogKind.Error);
-        if (!sv.Patchable) { Log(L.T("Patch de l'éditeur impossible : rien n'a été écrit.", "Editor patch not possible: nothing was written."), LogKind.Error); return false; }
-        if (sv.Original == 0) { Log(L.T("Éditeur déjà patché avec ces limites.", "Editor already patched with these limits."), LogKind.Ok); return true; }
-        if (dryRun) return true;
-        byte[] outb = (byte[])exe.Clone();
-        foreach (Site x in sites) Array.Copy(x.Patched, 0, outb, x.Offset, x.Patched.Length);
-        if (!Write(path, outb)) return false;
-        Log(L.T("Éditeur patché : les cités se placent sur toute la carte peinte de la mappemonde.", "Editor patched: cities can be placed anywhere on the painted map."), LogKind.Ok);
-        return true;
-    }
-
     // ---- restauration
 
     public static bool Restore(string path)

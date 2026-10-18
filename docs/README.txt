@@ -1,26 +1,15 @@
 Zeus Patcher 1.0 - Zeus: Master of Olympus / Poseidon
 =====================================================
 
-Two patches for Zeus.exe, use either or both:
-
-1. FRENCH PATCH: turns an English Zeus.exe into a French one
+FRENCH PATCH: turns an English Zeus.exe into a French one
    (French interface only: the button is greyed out in the English interface)
    For an English 2.1.4.0 Zeus.exe: GOG, Steam and all its widescreen versions
    (JackFuste exes, Resolution Customiser...), at any resolution.
    Fixes what the English exe gets wrong with French texts: accents, line heights,
    buttons too narrow, misplaced menu texts.
 
-2. SCENARIO EDITOR PATCH: any resolution, any world map
-   For an English 2.1.4.0 Zeus.exe or a French Zeus.exe.
-   The original editor can only place cities on the small 838 x 738 world map.
-   This patch makes it accept an enlarged world map of any size: cities can be placed
-   anywhere on the painted map, set on the left (like the original), centred or on the
-   right of the picture. The size is suggested from the resolution read in the exe and
-   can be changed.
-
 The program only changes the chosen Zeus.exe. A copy of the original (Zeus.exe.bak)
-is made next to it before the first change; the "Put the original exe back" button
-restores it.
+is made next to it first; the "Put the original exe back" button restores it.
 
 
 A 100% French game from the English game
@@ -66,13 +55,13 @@ the same places:
   Saved games work in both languages.
 
 
-Full-screen world maps
-----------------------
-With an enlarged world map, use World Map Converter (Convertisseur mappemonde,
-https://github.com/Vicinity4813/zeus-world-maps): it moves the cities, region names and
-trade routes of scenarios (.pak, .set), editor maps (.map) and saved games (.sav)
-onto an enlarged world map of any size (it adapts to a Zeus.exe), keeping a .bak copy of the originals. Then run the editor patch with the same world map
-size and the same map position.
+Full-screen world maps and scenario editor
+------------------------------------------
+Use Zeus World Map Converter (Convertisseur mappemonde,
+https://github.com/Vicinity4813/zeus-world-maps): choose the game's Zeus.exe, it
+recognises its version, language and resolution, patches the scenario editor for the
+enlarged world map (any size, English or French exe), then moves the cities, region
+names and trade routes of scenarios (.pak, .set, .map) and saved games (.sav).
 
 
 Not recognised: Russian exes, protected original CD exes (SecuROM).
