@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <assemblyIdentity version="0.1.0.0" processorArchitecture="x86" name="ZeusTools.Patcher" type="win32" />
-  <description>Patcheur Zeus - patch FR (Zeus : Le Maitre de l Olympe)</description>
+  <assemblyIdentity version="1.0.0.0" processorArchitecture="x86" name="ZeusTools.ExeFrenchPatch" type="win32" />
+  <description>Zeus - EXE French Patch (Zeus : Le Maitre de l Olympe)</description>
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
     <security>
       <requestedPrivileges>

@@ -1,4 +1,4 @@
-﻿# Genere l'icone du Patcheur Zeus (dessin original) : un Z dore au-dessus d'une bande bleu-blanc-rouge, sur fond bleu nuit.
+﻿# Genere l'icone de Zeus - EXE French Patch (dessin original) : un Z dore au-dessus d'une bande bleu-blanc-rouge, sur fond bleu nuit.
 # Fichier .ico multi-tailles : 256 px en PNG, 48 / 32 / 16 px en BMP 32 bits (Windows Vista et suivants).
 param([string]$Out = (Join-Path $PSScriptRoot '..\src\patcher.ico'))
 Add-Type -AssemblyName System.Drawing

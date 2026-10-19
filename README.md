@@ -1,4 +1,4 @@
-# Patcheur Zeus
+# Zeus - EXE French Patch
 
 **Patch FR pour *Zeus : Le Maître de l'Olympe* / *Poséidon***
 
@@ -10,13 +10,13 @@ Pour les mappemondes plein écran et le **patch de l'éditeur de scénarios** (n
 
 ## Téléchargement
 
-`Zeus-Patcher-1.0.zip` sur la page **[Releases](../../releases)** : le programme, sa notice et le code source.
+`Zeus-EXE-French-Patch-1.0.zip` sur la page **[Releases](../../releases)** : le programme, sa notice et le code source.
 
 > Windows peut afficher « Windows a protégé votre ordinateur » au premier lancement (programme récent, non signé) : **Informations complémentaires**, puis **Exécuter quand même**.
 
 ## Utilisation
 
-1. Lancez `Patcheur Zeus.exe` et choisissez votre `Zeus.exe` : le programme indique ce qu'il a trouvé (exe anglais ou français, résolution).
+1. Lancez `Zeus EXE French Patch.exe` et choisissez votre `Zeus.exe` : le programme indique ce qu'il a trouvé (exe anglais ou français, résolution).
 2. Cliquez sur **Patcher en français**.
 
 **Remettre l'exe d'origine** remet la copie `.bak`. Testé sur tous les exe widescreen de JackFuste, de 1280×720 à 3440×1440. Non reconnus : versions russes et exe du CD d'origine protégés (SecuROM).

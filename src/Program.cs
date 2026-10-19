@@ -1,6 +1,6 @@
-// Patcheur Zeus : met en francais un Zeus.exe anglais (accents, boutons), quelle que soit sa resolution.
+// Zeus - EXE French Patch : met en francais un Zeus.exe anglais (accents, boutons), quelle que soit sa resolution.
 // (Le patch de l'editeur de scenarios est dans Zeus World Map Converter.)
-// En ligne de commande : Patcheur.exe --fr <Zeus.exe> | --restaurer <Zeus.exe> | --info <Zeus.exe>   (--verifier : sans rien ecrire)
+// En ligne de commande : "Zeus EXE French Patch.exe" --fr <Zeus.exe> | --restaurer <Zeus.exe> | --info <Zeus.exe>   (--verifier : sans rien ecrire)
 using System;
 using System.Drawing;
 using System.IO;
@@ -8,10 +8,10 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
 
-[assembly: System.Reflection.AssemblyTitle("Patcheur Zeus")]
-[assembly: System.Reflection.AssemblyDescription("Patch FR et editeur de mappemonde pour Zeus : Le Maitre de l'Olympe")]
+[assembly: System.Reflection.AssemblyTitle("Zeus - EXE French Patch")]
+[assembly: System.Reflection.AssemblyDescription("Patch FR d'un Zeus.exe anglais (Zeus : Le Maitre de l'Olympe)")]
 [assembly: System.Reflection.AssemblyCompany("Outils Zeus (projet amateur)")]
-[assembly: System.Reflection.AssemblyProduct("Patcheur Zeus")]
+[assembly: System.Reflection.AssemblyProduct("Zeus - EXE French Patch")]
 [assembly: System.Reflection.AssemblyCopyright("© 2026 Vicinity4813 - MIT License")]
 [assembly: System.Resources.NeutralResourcesLanguage("fr-FR")]
 [assembly: System.Runtime.InteropServices.ComVisible(false)]
@@ -43,7 +43,7 @@ static class Program
             if ((a[i] == "--fr" || a[i] == "--restaurer" || a[i] == "--info") && i + 1 < a.Length) { mode = a[i]; exe = Path.GetFullPath(a[++i]); }
             else if (a[i] == "--verifier") dry = true;
         }
-        if (mode == null) { Console.WriteLine("Patcheur.exe --fr <Zeus.exe> | --restaurer <Zeus.exe> | --info <Zeus.exe> [--verifier]"); return 2; }
+        if (mode == null) { Console.WriteLine("\"Zeus EXE French Patch.exe\" --fr <Zeus.exe> | --restaurer <Zeus.exe> | --info <Zeus.exe> [--verifier]"); return 2; }
         bool err = false;
         Core.Log = (m, k) => { Console.WriteLine((k == LogKind.Error ? "ERREUR " : k == LogKind.Warn ? "attention " : "") + m); if (k == LogKind.Error) err = true; };
         try
@@ -138,8 +138,8 @@ class MainForm : Form
 
     void ApplyLanguage()
     {
-        Text = L.T("Patcheur Zeus", "Zeus Patcher");
-        title.Text = L.T("Patcheur Zeus : patch FR", "Zeus Patcher: French patch");
+        Text = "Zeus - EXE French Patch";
+        title.Text = "Zeus - EXE French Patch";
         intro.Text = L.T("Met en français un Zeus.exe anglais 2.1.4.0 (GOG, Steam, versions widescreen), quelle que soit la résolution. Seul cet exe est modifié, une copie « .bak » de l'original est faite à côté.",
                          "Turns an English 2.1.4.0 Zeus.exe (GOG, Steam, widescreen versions) into French, at any resolution. Only this exe is changed, a \".bak\" copy of the original is made next to it.");
         lExe.Text = L.T("Zeus.exe à patcher :", "Zeus.exe to patch:");

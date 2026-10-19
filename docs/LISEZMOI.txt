@@ -1,5 +1,5 @@
-Patcheur Zeus 1.0 - Zeus : Le Maître de l'Olympe / Poséidon
-============================================================
+Zeus - EXE French Patch 1.0 - Zeus : Le Maître de l'Olympe / Poséidon
+=====================================================================
 
 PATCH FR : met en français un Zeus.exe anglais
    Pour un Zeus.exe anglais 2.1.4.0 : GOG, Steam et toutes ses versions widescreen
