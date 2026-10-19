@@ -57,7 +57,7 @@ anglais, aux mêmes emplacements :
 
 Mappemondes plein écran et éditeur de scénarios
 -----------------------------------------------
-Utilisez World Map Converter (Zeus - World Maps Tools) (Convertisseur mappemonde,
+Utilisez World Map Converter (Zeus - World Maps Tools,
 https://github.com/Vicinity4813/zeus-world-maps-tools) : choisissez le Zeus.exe du jeu, il
 reconnaît sa version, sa langue et sa résolution, patche l'éditeur de scénarios pour la
 mappemonde agrandie (n'importe quelle taille, exe anglais ou français), puis replace les
