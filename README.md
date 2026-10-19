@@ -6,7 +6,7 @@ Rend un **`Zeus.exe` anglais** (2.1.4.0 : GOG, Steam et toutes ses versions wide
 
 Seul le `Zeus.exe` choisi est modifié. Une copie `Zeus.exe.bak` de l'original est faite d'abord, et un bouton la remet en place.
 
-Pour les mappemondes plein écran et le **patch de l'éditeur de scénarios** (n'importe quelle résolution, n'importe quelle mappemonde, exe anglais ou français), voir **[Zeus World Map Converter](https://github.com/Vicinity4813/zeus-world-maps)**.
+Pour les mappemondes plein écran et le **patch de l'éditeur de scénarios** (n'importe quelle résolution, n'importe quelle mappemonde, exe anglais ou français), voir **[World Map Converter (Zeus - World Maps Tools)](https://github.com/Vicinity4813/zeus-world-maps-tools)**.
 
 ## Téléchargement
 
