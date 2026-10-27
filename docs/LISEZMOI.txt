@@ -5,7 +5,8 @@ PATCH FR : met en français un Zeus.exe anglais
    Pour un Zeus.exe anglais 2.1.4.0 : GOG, Steam et toutes ses versions widescreen
    (exe de JackFuste, Resolution Customiser...), quelle que soit la résolution.
    Corrige ce que l'exe anglais affiche mal avec les textes français : accents,
-   hauteur des lignes, boutons trop étroits, textes du menu mal placés.
+   hauteur des lignes, boutons trop étroits, textes du menu mal placés,
+   polices différentes de l'édition française, fenêtres Finances et Culture trop étroites.
 
 Le programme ne modifie que le Zeus.exe choisi. Une copie de l'original (Zeus.exe.bak)
 est faite à côté avant la modification ; le bouton « Remettre l'exe d'origine »

@@ -2,7 +2,7 @@
 
 **Patch FR pour *Zeus : Le Maître de l'Olympe* / *Poséidon***
 
-Rend un **`Zeus.exe` anglais** (2.1.4.0 : GOG, Steam et toutes ses versions widescreen, quelle que soit la résolution) capable d'afficher correctement les textes français : accents, hauteur des lignes, boutons élargis, position des textes du menu, comme l'édition française.
+Rend un **`Zeus.exe` anglais** (2.1.4.0 : GOG, Steam et toutes ses versions widescreen, quelle que soit la résolution) capable d'afficher correctement les textes français : accents, hauteur des lignes, polices choisies comme dans l'édition française (titres, boutons, messages), boutons élargis, position des textes du menu, fenêtres Finances et Culture élargies, comme l'édition française.
 
 Seul le `Zeus.exe` choisi est modifié. Une copie `Zeus.exe.bak` de l'original est faite d'abord, et un bouton la remet en place.
 
@@ -39,6 +39,7 @@ Déplacez les campagnes anglaises hors du dossier `Adventures` (sans les supprim
 | Fichier | Rôle |
 |---|---|
 | `src/FrenchPatch.cs` | le patch FR : table des caractères, hauteur des lignes, boutons, textes du menu |
+| `src/ReglePolices.cs` | règle des polices de l'édition française, règles propres à certains textes, fenêtres élargies |
 | `src/FrTable.cs` | table caractère → glyphe de l'édition française (224 octets) |
 | `src/Sites.cs` | chaque endroit modifié, avec ses octets d'origine attendus |
 | `src/EditorPatch.cs` | reconnaissance des compilations anglaise et française |

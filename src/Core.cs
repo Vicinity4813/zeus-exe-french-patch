@@ -59,7 +59,10 @@ public static class Core
         if (build == null) { Log(L.T("Exe non reconnu : seule la compilation anglaise 2.1.4.0 (GOG, Steam et ses versions widescreen) peut être patchée.", "Exe not recognised: only the English 2.1.4.0 build (GOG, Steam and its widescreen versions) can be patched."), LogKind.Error); return false; }
 
         List<Site> sites = FrenchPatch.Build(exe, FrTable.Bytes, null, null);
+        sites.AddRange(ReglePolices.Build(exe));
         Survey sv = Survey.Of(sites, exe);
+        if (ReglePolices.Skipped != null)
+            Log(string.Format(L.T("  Règle des polices et fenêtres élargies sautées : « {0} » déjà modifié par un autre patch.", "  Font rule and widened windows skipped: \"{0}\" already changed by another patch."), ReglePolices.Skipped), LogKind.Warn);
         if (sv.Patched == 0 && !FrenchPatch.LooksEnglishTable(exe, FrTable.Bytes)) { Log(L.T("Table des caractères inattendue dans cet exe.", "Unexpected character table in this exe."), LogKind.Error); return false; }
         foreach (Site x in sv.Unexpected)
             Log(string.Format(L.T("  {0} : déjà modifié par un autre patch ({1})", "  {0}: already changed by another patch ({1})"), x.Name, x.Required ? L.T("bloquant", "blocking") : L.T("sauté", "skipped")), x.Required ? LogKind.Error : LogKind.Warn);
@@ -72,8 +75,8 @@ public static class Core
         foreach (Site x in sites) if (x.StateIn(exe) == SiteState.Original) Array.Copy(x.Patched, 0, outb, x.Offset, x.Patched.Length);
         if (!Survey.Of(sites, outb).Done) throw new Exception(L.T("vérification après patch", "check after patching"));
         if (!Write(path, outb)) return false;
-        Log(L.T("Exe patché en français : accents, hauteur des lignes, boutons et textes du menu. Il faut aussi les textes et polices françaises du jeu (Zeus_Text.eng, Zeus_MM.eng, Model\\Zeus eventmsg.txt, DATA\\Zeus_Fonts.*).",
-                "Exe patched to French: accents, line heights, buttons and menu texts. The game's French texts and fonts are also needed (Zeus_Text.eng, Zeus_MM.eng, Model\\Zeus eventmsg.txt, DATA\\Zeus_Fonts.*)."), LogKind.Ok);
+        Log(L.T("Exe patché en français : accents, hauteur des lignes, polices de l'édition française, boutons, textes du menu et fenêtres élargies. Il faut aussi les textes et polices françaises du jeu (Zeus_Text.eng, Zeus_MM.eng, Model\\Zeus eventmsg.txt, DATA\\Zeus_Fonts.*).",
+                "Exe patched to French: accents, line heights, French edition fonts, buttons, menu texts and widened windows. The game's French texts and fonts are also needed (Zeus_Text.eng, Zeus_MM.eng, Model\\Zeus eventmsg.txt, DATA\\Zeus_Fonts.*)."), LogKind.Ok);
         return true;
     }
 
