@@ -1,6 +1,7 @@
-// Zeus - EXE French Patch : met en francais un Zeus.exe anglais (accents, boutons), quelle que soit sa resolution.
-// (Le patch de l'editeur de scenarios est dans Zeus World Map Converter.)
-// En ligne de commande : "Zeus EXE French Patch.exe" --fr <Zeus.exe> | --restaurer <Zeus.exe> | --info <Zeus.exe>   (--verifier : sans rien ecrire)
+// Zeus - EXE French Patch : met en francais un Zeus.exe anglais (accents, polices, boutons, fenetres), quelle que soit sa
+// resolution, et copie les fichiers d'un jeu francais installe. (Le patch de l'editeur de scenarios est dans Zeus World Map Converter.)
+// En ligne de commande : "Zeus EXE French Patch.exe" --fr <Zeus.exe> | --restaurer <Zeus.exe> | --info <Zeus.exe>
+//   | --importer <Zeus.exe> <dossier du jeu francais> | --restaurer-fichiers <Zeus.exe>   (--verifier : sans rien ecrire, pour --fr et --importer)
 using System;
 using System.Drawing;
 using System.IO;
@@ -15,9 +16,9 @@ using System.Windows.Forms;
 [assembly: System.Reflection.AssemblyCopyright("© 2026 Vicinity4813 - MIT License")]
 [assembly: System.Resources.NeutralResourcesLanguage("fr-FR")]
 [assembly: System.Runtime.InteropServices.ComVisible(false)]
-[assembly: System.Reflection.AssemblyVersion("1.0.0.0")]
-[assembly: System.Reflection.AssemblyFileVersion("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersion("1.0")]
+[assembly: System.Reflection.AssemblyVersion("1.1.0.0")]
+[assembly: System.Reflection.AssemblyFileVersion("1.1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersion("1.1")]
 
 static class Program
 {
@@ -37,13 +38,14 @@ static class Program
 
     static int Cli(string[] a)
     {
-        string mode = null, exe = null; bool dry = false;
+        string mode = null, exe = null, source = null; bool dry = false;
         for (int i = 0; i < a.Length; i++)
         {
-            if ((a[i] == "--fr" || a[i] == "--restaurer" || a[i] == "--info") && i + 1 < a.Length) { mode = a[i]; exe = Path.GetFullPath(a[++i]); }
+            if ((a[i] == "--fr" || a[i] == "--restaurer" || a[i] == "--info" || a[i] == "--restaurer-fichiers") && i + 1 < a.Length) { mode = a[i]; exe = Path.GetFullPath(a[++i]); }
+            else if (a[i] == "--importer" && i + 2 < a.Length) { mode = a[i]; exe = Path.GetFullPath(a[++i]); source = a[++i]; }
             else if (a[i] == "--verifier") dry = true;
         }
-        if (mode == null) { Console.WriteLine("\"Zeus EXE French Patch.exe\" --fr <Zeus.exe> | --restaurer <Zeus.exe> | --info <Zeus.exe> [--verifier]"); return 2; }
+        if (mode == null) { Console.WriteLine("\"Zeus EXE French Patch.exe\" --fr <Zeus.exe> | --restaurer <Zeus.exe> | --info <Zeus.exe> | --importer <Zeus.exe> <dossier du jeu français> | --restaurer-fichiers <Zeus.exe> [--verifier]"); return 2; }
         bool err = false;
         Core.Log = (m, k) => { Console.WriteLine((k == LogKind.Error ? "ERREUR " : k == LogKind.Warn ? "attention " : "") + m); if (k == LogKind.Error) err = true; };
         try
@@ -51,6 +53,8 @@ static class Program
             if (mode == "--info") Console.WriteLine(MainForm.Describe(exe));
             else if (mode == "--fr") Core.PatchFr(exe, dry);
             else if (mode == "--restaurer") Core.Restore(exe);
+            else if (mode == "--importer") FrenchFiles.Import(exe, source, dry);
+            else if (mode == "--restaurer-fichiers") FrenchFiles.RestoreFiles(exe);
         }
         catch (Exception ex) { Console.WriteLine("ERREUR " + ex.Message); return 1; }
         return err ? 1 : 0;
@@ -59,10 +63,10 @@ static class Program
 
 class MainForm : Form
 {
-    Label title, intro, lExe, lInfo, lFrText;
+    Label title, intro, lExe, lInfo, lFrText, lFilesText;
     TextBox tExe;
-    Button bExe, bFr, bRestore;
-    GroupBox gFr;
+    Button bExe, bFr, bRestore, bImport, bRestoreFiles;
+    GroupBox gFr, gFiles;
     RichTextBox log;
     bool busy;
 
@@ -70,8 +74,8 @@ class MainForm : Form
     {
         Font = new Font("Segoe UI", 9.5f);
         AutoScaleMode = AutoScaleMode.Dpi;
-        ClientSize = new Size(760, 530);
-        MinimumSize = new Size(680, 460);
+        ClientSize = new Size(760, 632);
+        MinimumSize = new Size(680, 562);
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Color.FromArgb(244, 238, 226);
         try { Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
@@ -89,8 +93,14 @@ class MainForm : Form
         bFr = new Button { Location = new Point(524, 34), Size = new Size(190, 36), Font = new Font(Font, FontStyle.Bold), Anchor = AnchorStyles.Top | AnchorStyles.Right };
         gFr.Controls.AddRange(new Control[] { lFrText, bFr });
 
-        bRestore = new Button { Location = new Point(16, 290), Size = new Size(260, 32) };
-        log = new RichTextBox { Location = new Point(16, 332), Size = new Size(728, 182), ReadOnly = true, BackColor = Color.White, Font = new Font("Consolas", 9f),
+        gFiles = new GroupBox { Location = new Point(16, 282), Size = new Size(728, 96), Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right };
+        lFilesText = new Label { Location = new Point(12, 22), Size = new Size(500, 64) };
+        bImport = new Button { Location = new Point(524, 20), Size = new Size(190, 32), Font = new Font(Font, FontStyle.Bold), Anchor = AnchorStyles.Top | AnchorStyles.Right };
+        bRestoreFiles = new Button { Location = new Point(524, 56), Size = new Size(190, 32), Anchor = AnchorStyles.Top | AnchorStyles.Right };
+        gFiles.Controls.AddRange(new Control[] { lFilesText, bImport, bRestoreFiles });
+
+        bRestore = new Button { Location = new Point(16, 392), Size = new Size(260, 32) };
+        log = new RichTextBox { Location = new Point(16, 434), Size = new Size(728, 182), ReadOnly = true, BackColor = Color.White, Font = new Font("Consolas", 9f),
             Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right };
 
         bExe.Click += delegate
@@ -105,8 +115,18 @@ class MainForm : Form
             if (MessageBox.Show(this, L.T("Remettre l'exe d'origine (copie .bak) ?", "Put the original exe back (.bak copy)?"), Text, MessageBoxButtons.OKCancel) == DialogResult.OK)
                 Run(p => Core.Restore(p));
         };
+        bImport.Click += delegate
+        {
+            using (FolderBrowserDialog d = new FolderBrowserDialog { Description = L.T("Dossier de votre jeu français installé (celui qui contient Zeus_Text.eng)", "Your installed French game folder (the one with Zeus_Text.eng)"), ShowNewFolderButton = false })
+                if (d.ShowDialog(this) == DialogResult.OK) { string src = d.SelectedPath; Run(p => FrenchFiles.Import(p, src, false)); }
+        };
+        bRestoreFiles.Click += delegate
+        {
+            if (MessageBox.Show(this, L.T("Retirer les fichiers français et remettre les fichiers anglais ?", "Remove the French files and put the English files back?"), Text, MessageBoxButtons.OKCancel) == DialogResult.OK)
+                Run(p => FrenchFiles.RestoreFiles(p));
+        };
 
-        Controls.AddRange(new Control[] { title, intro, lExe, tExe, bExe, lInfo, gFr, bRestore, log });
+        Controls.AddRange(new Control[] { title, intro, lExe, tExe, bExe, lInfo, gFr, gFiles, bRestore, log });
         ApplyLanguage();
         ShowInfo();
     }
@@ -129,25 +149,31 @@ class MainForm : Form
     {
         string p = tExe.Text.Trim();
         lInfo.Text = Describe(p);
-        bFr.Enabled = false;
+        bFr.Enabled = bImport.Enabled = bRestoreFiles.Enabled = false;
         if (!File.Exists(p)) return;
         byte[] b = File.ReadAllBytes(p);
         string build = Core.BuildOf(b);
-        bFr.Enabled = build != null && build != "français";
+        bFr.Enabled = bImport.Enabled = build != null && build != "français";
+        bRestoreFiles.Enabled = FrenchFiles.HasBackup(p);
     }
 
     void ApplyLanguage()
     {
         Text = "Zeus - EXE French Patch";
         title.Text = "Zeus - EXE French Patch";
-        intro.Text = L.T("Met en français un Zeus.exe anglais 2.1.4.0 (GOG, Steam, versions widescreen), quelle que soit la résolution. Seul cet exe est modifié, une copie « .bak » de l'original est faite à côté.",
-                         "Turns an English 2.1.4.0 Zeus.exe (GOG, Steam, widescreen versions) into French, at any resolution. Only this exe is changed, a \".bak\" copy of the original is made next to it.");
+        intro.Text = L.T("Met en français un jeu anglais à partir d'un Zeus.exe anglais 2.1.4.0 (GOG, Steam, versions widescreen), quelle que soit la résolution. Chaque étape s'annule : l'original de l'exe et les fichiers anglais sont gardés à côté.",
+                         "Turns an English game into French from an English 2.1.4.0 Zeus.exe (GOG, Steam, widescreen versions), at any resolution. Each step can be undone: the original exe and the English files are kept next to the game.");
         lExe.Text = L.T("Zeus.exe à patcher :", "Zeus.exe to patch:");
         bExe.Text = L.T("Parcourir…", "Browse…");
         gFr.Text = L.T("Patch FR (exe anglais)", "French patch (English exe) - French interface only");
-        lFrText.Text = L.T("Accents (table des caractères), hauteur des lignes, boutons élargis et textes du menu, comme l'édition française. Le jeu doit avoir les textes et polices françaises (Zeus_Text.eng, Zeus_MM.eng, Zeus eventmsg.txt, Zeus_Fonts).",
-                           "Accents (character table), line heights, widened buttons and menu texts, as in the French edition. The game needs the French texts and fonts (Zeus_Text.eng, Zeus_MM.eng, Zeus eventmsg.txt, Zeus_Fonts).");
+        lFrText.Text = L.T("Accents, hauteur des lignes, polices, boutons, textes du menu et fenêtres élargies (Finances, Culture, messages, didacticiels), comme l'édition française. Seul Zeus.exe est modifié, une copie « .bak » est faite à côté.",
+                           "Accents, line heights, fonts, buttons, menu texts and widened windows (Finances, Culture, messages, tutorials), as in the French edition. Only Zeus.exe is changed, a \".bak\" copy is made next to it.");
         bFr.Text = L.T("Patcher en français", "Patch to French");
+        gFiles.Text = L.T("Fichiers français (depuis votre jeu français installé)", "French files (from your installed French game)");
+        lFilesText.Text = L.T("Copie les textes, polices, voix, campagnes et tutoriels de votre jeu français dans le dossier de ce Zeus.exe (500 Mo environ). Votre jeu français n'est que lu ; les fichiers anglais vont dans « " + FrenchFiles.BackupFolder + " ».",
+                              "Copies the texts, fonts, voices, campaigns and tutorials of your French game into this Zeus.exe's folder (about 500 MB). Your French game is only read; the English files go to \"" + FrenchFiles.BackupFolder + "\".");
+        bImport.Text = L.T("Importer le jeu français…", "Import the French game…");
+        bRestoreFiles.Text = L.T("Remettre les fichiers anglais", "Put the English files back");
         bRestore.Text = L.T("Remettre l'exe d'origine (.bak)", "Put the original exe back (.bak)");
     }
 
@@ -158,7 +184,7 @@ class MainForm : Form
         if (p.Length == 0) return;
         busy = true;
         log.Clear();
-        foreach (Control c in new Control[] { bFr, bRestore, bExe }) c.Enabled = false;
+        foreach (Control c in new Control[] { bFr, bRestore, bExe, bImport, bRestoreFiles }) c.Enabled = false;
         Core.Log = (m, k) => BeginInvoke((Action)(() =>
         {
             log.SelectionStart = log.TextLength;

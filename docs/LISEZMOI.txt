@@ -1,23 +1,29 @@
-Zeus - EXE French Patch 1.0 - Zeus : Le Maître de l'Olympe / Poséidon
+Zeus - EXE French Patch 1.1 - Zeus : Le Maître de l'Olympe / Poséidon
 =====================================================================
 
 PATCH FR : met en français un Zeus.exe anglais
    Pour un Zeus.exe anglais 2.1.4.0 : GOG, Steam et toutes ses versions widescreen
    (exe de JackFuste, Resolution Customiser...), quelle que soit la résolution.
    Corrige ce que l'exe anglais affiche mal avec les textes français : accents,
-   hauteur des lignes, boutons trop étroits, textes du menu mal placés,
-   polices différentes de l'édition française, fenêtres Finances et Culture trop étroites.
+   hauteur des lignes, boutons trop étroits, textes du menu mal placés, polices
+   différentes de l'édition française, fenêtres Finances, Culture, réception des
+   messages et didacticiels trop étroites.
 
-Le programme ne modifie que le Zeus.exe choisi. Une copie de l'original (Zeus.exe.bak)
-est faite à côté avant la modification ; le bouton « Remettre l'exe d'origine »
-la remet en place.
+   Ne modifie que le Zeus.exe choisi. Une copie de l'original (Zeus.exe.bak) est faite à
+   côté ; le bouton « Remettre l'exe d'origine » la remet en place.
+
+IMPORT : copie les fichiers de VOTRE jeu français officiel
+   Bouton « Importer le jeu français... », puis choisissez le dossier de votre jeu
+   français installé (celui qui contient Zeus_Text.eng). Environ 500 Mo de place libre.
+   Votre jeu français n'est que lu. Dans le dossier du jeu anglais, les fichiers remplacés
+   et les campagnes anglaises sont déplacés dans « Sauvegarde anglais » ; le bouton
+   « Remettre les fichiers anglais » retire les fichiers français et remet tout en place.
 
 
-Pour avoir un jeu 100 % français à partir du jeu anglais
----------------------------------------------------------
-Le patch FR corrige l'exe ; les textes, polices, images et voix françaises viennent de
-VOTRE jeu français officiel (CD ou installation). Copiez-les dans le dossier du jeu
-anglais, aux mêmes emplacements :
+Ce que copie l'import
+---------------------
+Les fichiers ci-dessous, aux mêmes emplacements (vous pouvez aussi les copier à la main).
+Vos scénarios ajoutés ne sont pas copiés.
 
   Indispensable (textes et lettres accentuées) :
     Zeus_Text.eng
@@ -26,17 +32,8 @@ anglais, aux mêmes emplacements :
     DATA\Zeus_Fonts.sg3
     DATA\zeus_Fonts.555
 
-  Images des menus et des écrans de fin (texte en français) :
-    DATA\Zeus_FE_ChooseGame.jpg
-    DATA\Zeus_FE_CampaignSelection.JPG
-    DATA\Zeus_FE_MissionIntroduction.jpg
-    DATA\Zeus_FE_tutorials.JPG
-    DATA\Zeus_FE_Registry.jpg
-    DATA\Poseidon_FE_MainMenu.JPG
-    DATA\Poseidon_FE_Registry.jpg
-    DATA\Zeus_Victory.jpg
-    DATA\Zeus_Defeat.jpg
-    DATA\scoreb.jpg
+  Textes de l'éditeur de scénarios :
+    Zeus_Editor_Text.eng
 
   Voix, sons et vidéo d'introduction :
     Audio\                      (tout le dossier, environ 340 Mo)
@@ -49,10 +46,10 @@ anglais, aux mêmes emplacements :
     La révolte maya, Les plus jeunes jumeaux, Atlantide, la cité engloutie,
     Jeu ouvert - Armée 2, Jeu ouvert - Bac à sable 2, Jeu ouvert - Economie 2),
     les tutoriels (agora.pak ... warrior.pak) et tutorial00.sav à tutorial15.sav.
-    Déplacez ailleurs les campagnes anglaises du dossier Adventures (sans les supprimer) :
-    sinon chaque campagne apparaît deux fois.
+    Les campagnes anglaises doivent quitter le dossier Adventures, sinon chaque campagne
+    apparaît deux fois : l'import s'en charge, à la main déplacez-les sans les supprimer.
 
-  Inutile : Zeus_Editor_Text.eng (identique dans les deux versions), Zeus.ini, Zeus.inf.
+  Inutile : les images de DATA (les mêmes dans les deux versions, sans texte), Zeus.ini, Zeus.inf.
   Les sauvegardes restent compatibles entre les deux langues.
 
 

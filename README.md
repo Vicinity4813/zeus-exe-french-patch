@@ -2,15 +2,16 @@
 
 **Patch FR pour *Zeus : Le Maître de l'Olympe* / *Poséidon***
 
-Rend un **`Zeus.exe` anglais** (2.1.4.0 : GOG, Steam et toutes ses versions widescreen, quelle que soit la résolution) capable d'afficher correctement les textes français : accents, hauteur des lignes, polices choisies comme dans l'édition française (titres, boutons, messages), boutons élargis, position des textes du menu, fenêtres Finances et Culture élargies, comme l'édition française.
+Met en français un jeu anglais, en deux étapes indépendantes :
 
-Seul le `Zeus.exe` choisi est modifié. Une copie `Zeus.exe.bak` de l'original est faite d'abord, et un bouton la remet en place.
+- **Le patch de l'exe** rend un **`Zeus.exe` anglais** (2.1.4.0 : GOG, Steam et toutes ses versions widescreen, quelle que soit la résolution) capable d'afficher correctement les textes français : accents, hauteur des lignes, polices choisies comme dans l'édition française (titres, boutons, messages), boutons élargis, position des textes du menu, fenêtres Finances, Culture, réception des messages et didacticiels élargies, comme l'édition française. Seul le `Zeus.exe` choisi est modifié : une copie `Zeus.exe.bak` de l'original est faite d'abord, et un bouton la remet en place.
+- **L'import** copie dans le dossier du jeu les textes, polices, voix, campagnes et tutoriels de **votre propre jeu français officiel**. Celui-ci n'est que lu. Les fichiers anglais remplacés et les campagnes anglaises sont déplacés dans un dossier `Sauvegarde anglais`, et un bouton les remet en place.
 
 Pour les mappemondes plein écran et le **patch de l'éditeur de scénarios** (n'importe quelle résolution, n'importe quelle mappemonde, exe anglais ou français), voir **[World Map Converter (Zeus - World Maps Tools)](https://github.com/Vicinity4813/zeus-world-maps-tools)**.
 
 ## Téléchargement
 
-`Zeus-EXE-French-Patch-1.0.zip` sur la page **[Releases](../../releases)** : le programme, sa notice et le code source.
+`Zeus-EXE-French-Patch-1.1.zip` sur la page **[Releases](../../releases)** : le programme, sa notice et le code source.
 
 > Windows peut afficher « Windows a protégé votre ordinateur » au premier lancement (programme récent, non signé) : **Informations complémentaires**, puis **Exécuter quand même**.
 
@@ -18,21 +19,22 @@ Pour les mappemondes plein écran et le **patch de l'éditeur de scénarios** (n
 
 1. Lancez `Zeus EXE French Patch.exe` et choisissez votre `Zeus.exe` : le programme indique ce qu'il a trouvé (exe anglais ou français, résolution).
 2. Cliquez sur **Patcher en français**.
+3. Cliquez sur **Importer le jeu français…** et choisissez le dossier de votre jeu français installé (celui qui contient `Zeus_Text.eng`). Il faut environ 500 Mo de place libre.
 
-**Remettre l'exe d'origine** remet la copie `.bak`. Testé sur tous les exe widescreen de JackFuste, de 1280×720 à 3440×1440. Non reconnus : versions russes et exe du CD d'origine protégés (SecuROM).
+**Remettre l'exe d'origine** remet la copie `.bak` ; **Remettre les fichiers anglais** retire les fichiers français et remet le dossier `Sauvegarde anglais`. Les exe widescreen de JackFuste, de 1280×720 à 3440×1440, ont les mêmes octets aux endroits modifiés. Non reconnus : versions russes et exe du CD d'origine protégés (SecuROM).
 
-## Un jeu 100 % français à partir du jeu anglais
+## Ce que copie l'import
 
-Le patch corrige l'exe ; les textes, polices, images et voix françaises viennent de **votre propre jeu français officiel** (CD ou installation). Copiez-les dans le dossier du jeu anglais, aux mêmes emplacements :
+Le patch corrige l'exe ; les textes, polices et voix françaises viennent de **votre propre jeu français officiel** (CD ou installation). L'import copie les fichiers ci-dessous, aux mêmes emplacements. Vos scénarios ajoutés ne sont pas copiés. Sans le bouton, vous pouvez aussi les copier à la main :
 
 | Pour | Fichiers |
 |---|---|
 | **Textes et lettres accentuées** (indispensable) | `Zeus_Text.eng`, `Zeus_MM.eng`, `Model\Zeus eventmsg.txt`, `DATA\Zeus_Fonts.sg3`, `DATA\zeus_Fonts.555` |
-| Menus et écrans de fin | `DATA\Zeus_FE_ChooseGame.jpg`, `DATA\Zeus_FE_CampaignSelection.JPG`, `DATA\Zeus_FE_MissionIntroduction.jpg`, `DATA\Zeus_FE_tutorials.JPG`, `DATA\Zeus_FE_Registry.jpg`, `DATA\Poseidon_FE_MainMenu.JPG`, `DATA\Poseidon_FE_Registry.jpg`, `DATA\Zeus_Victory.jpg`, `DATA\Zeus_Defeat.jpg`, `DATA\scoreb.jpg` |
+| Textes de l'éditeur de scénarios | `Zeus_Editor_Text.eng` |
 | Voix, sons, vidéo d'introduction | `Audio\` (tout le dossier, ~340 Mo), `Binks\Zeus_Intro.bik`, `Binks\Zeus_Intro_HiQ.bik` |
 | Campagnes et tutoriels en français | dans `Adventures\` : les 16 campagnes Zeus (`#La naissance de l'Atlantide.pak` … `}Jeu ouvert - Economie.pak`), les 8 dossiers des aventures Poséidon (`L'odyssée`, `La naissance de Troie`, `La révolte maya`, `Les plus jeunes jumeaux`, `Atlantide, la cité engloutie`, `Jeu ouvert - Armée 2`, `Jeu ouvert - Bac à sable 2`, `Jeu ouvert - Economie 2`), les tutoriels (`agora.pak` … `warrior.pak`) et `tutorial00.sav` … `tutorial15.sav` |
 
-Déplacez les campagnes anglaises hors du dossier `Adventures` (sans les supprimer), sinon chaque campagne apparaît deux fois. Inutile : `Zeus_Editor_Text.eng` (identique dans les deux versions), `Zeus.ini`, `Zeus.inf`. Les sauvegardes restent compatibles dans les deux langues.
+Les campagnes anglaises doivent quitter le dossier `Adventures`, sinon chaque campagne apparaît deux fois : l'import s'en charge, à la main déplacez-les sans les supprimer. Inutile : les images de `DATA` (les mêmes dans les deux versions, sans texte), `Zeus.ini`, `Zeus.inf`. Les sauvegardes restent compatibles dans les deux langues.
 
 ## Code source
 
@@ -40,6 +42,7 @@ Déplacez les campagnes anglaises hors du dossier `Adventures` (sans les supprim
 |---|---|
 | `src/FrenchPatch.cs` | le patch FR : table des caractères, hauteur des lignes, boutons, textes du menu |
 | `src/ReglePolices.cs` | règle des polices de l'édition française, règles propres à certains textes, fenêtres élargies |
+| `src/FrenchFiles.cs` | import des fichiers d'un jeu français installé et retour aux fichiers anglais |
 | `src/FrTable.cs` | table caractère → glyphe de l'édition française (224 octets) |
 | `src/Sites.cs` | chaque endroit modifié, avec ses octets d'origine attendus |
 | `src/EditorPatch.cs` | reconnaissance des compilations anglaise et française |

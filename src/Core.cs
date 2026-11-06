@@ -80,6 +80,14 @@ public static class Core
         return true;
     }
 
+    // Patch FR complet dans cet exe (accents et regle des polices) : rien de patchable ne reste a l'origine.
+    public static bool FrPatchApplied(byte[] exe)
+    {
+        List<Site> sites = FrenchPatch.Build(exe, FrTable.Bytes, null, null);
+        sites.AddRange(ReglePolices.Build(exe));
+        return Survey.Of(sites, exe).Done;
+    }
+
     // ---- restauration
 
     public static bool Restore(string path)
